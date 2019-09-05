@@ -88,7 +88,7 @@ class DB {
 		return $wpdb->get_results( $sql );
 	}
 
-	static function fetch_quicksaves( $value, $environment_id ) {
+	static function fetch_environment( $value, $environment_id ) {
 		global $wpdb;
 		$value          = intval( $value );
 		$environment_id = intval( $environment_id );
@@ -123,6 +123,23 @@ class DB {
 		return $wpdb->get_results( $sql );
 	}
 
+	static function fetch_by_environments( $site_id ) {
+		
+		$results = array();
+
+		$environment_id = get_field( 'environment_production_id', $site_id );
+		if ( $environment_id != "" ) {
+			$results["Production"] = self::fetch_environment( $site_id, $environment_id );
+		}
+
+		$environment_id = get_field( 'environment_staging_id', $site_id );
+		if ( $environment_id != "" ) {
+			$results["Staging"] = self::fetch_environment( $site_id, $environment_id );
+		}
+		
+		return $results;
+	}
+
 }
 
 class environments extends DB {
@@ -140,6 +157,12 @@ class update_logs extends DB {
 class quicksaves extends DB {
 
 	static $primary_key = 'quicksave_id';
+
+}
+
+class snapshots extends DB {
+
+	static $primary_key = 'snapshot_id';
 
 }
 
@@ -534,7 +557,7 @@ class Site {
 		$site_details->mailgun              = $mailgun;
 		$site_details->subsite_count        = $subsite_count;
 		$site_details->tabs                 = 'tab-Site-Management';
-		$site_details->tabs_management      = 'tab-Keys';
+		$site_details->tabs_management      = 'tab-Info';
 		$site_details->storage_raw          = $environments[0]->storage;
 		$site_details->storage              = $storage_gbs;
 		if ( is_string( $visits ) ) {
@@ -620,6 +643,7 @@ class Site {
 			'themes'                  => json_decode( $environments[0]->themes ),
 			'users'                   => 'Loading',
 			'quicksaves'              => 'Loading',
+			'snapshots'               => 'Loading',
 			'update_logs'             => 'Loading',
 			'quicksave_panel'         => array(),
 			'quicksave_search'        => '',
@@ -679,13 +703,17 @@ class Site {
 			$site_details->environments[0]['ssh'] = "ssh ${production_username}@${production_address} -p ${production_port}";
 		}
 		if ( $site_details->provider == 'kinsta' and $environments[0]->database_username ) {
-			$site_details->environments[0]['database']          = "https://mysqleditor-${database_username}.kinsta.cloud";
+			$kinsta_ending = array_pop( explode(".", $site_details->environments[0]['address']) );
+			if ( $kinsta_ending != "com" && $$kinsta_ending != "cloud" ) {
+				$kinsta_ending = "cloud";
+			}
+			$site_details->environments[0]['database']          = "https://mysqleditor-${database_username}.kinsta.{$kinsta_ending}";
 			$site_details->environments[0]['database_username'] = $environments[0]->database_username;
 			$site_details->environments[0]['database_password'] = $environments[0]->database_password;
 		}
 
 		if ( $site_details->provider == 'kinsta' ) {
-			$link_staging = "https://staging-{$environments[1]->username}.kinsta.cloud";
+			$link_staging = $environments[1]->home_url;
 		}
 
 		if ( $site_details->provider == 'wpengine' ) {
@@ -707,6 +735,7 @@ class Site {
 			'themes'                  => json_decode( $environments[1]->themes ),
 			'users'                   => 'Loading',
 			'quicksaves'              => 'Loading',
+			'snapshots'               => 'Loading',
 			'update_logs'             => 'Loading',
 			'quicksave_panel'         => array(),
 			'quicksave_search'        => '',
@@ -766,7 +795,11 @@ class Site {
 			$site_details->environments[1]['ssh'] = "ssh ${staging_username}@${staging_address} -p ${staging_port}";
 		}
 		if ( $site_details->provider == 'kinsta' and $environments[1]->database_username ) {
-			$site_details->environments[1]['database']          = "https://mysqleditor-staging-${database_username}.kinsta.cloud";
+			$kinsta_ending = array_pop( explode(".", $site_details->environments[1]['address']) );
+			if ( $kinsta_ending != "com" && $$kinsta_ending != "cloud" ) {
+				$kinsta_ending = "cloud";
+			}
+			$site_details->environments[1]['database']          = "https://mysqleditor-staging-${database_username}.kinsta.{$kinsta_ending}";
 			$site_details->environments[1]['database_username'] = $environments[1]->database_username;
 			$site_details->environments[1]['database_password'] = $environments[1]->database_password;
 		}

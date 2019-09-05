@@ -1,533 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><?php echo get_field( 'business_name', 'option' ); ?> - Account</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <meta charset="utf-8">
 <?php
-if ( defined( 'ARVE_SLUG' ) ) {
-wp_enqueue_style( ARVE_SLUG );
-wp_enqueue_script( ARVE_SLUG );
-}
+// Load favicons and wpApiSettings from normal WordPress header
+captaincore_header_content_extracted();
 
 $user       = wp_get_current_user();
 $role_check = in_array( 'subscriber', $user->roles ) + in_array( 'customer', $user->roles ) + in_array( 'partner', $user->roles ) + in_array( 'administrator', $user->roles ) + in_array( 'editor', $user->roles );
 if ( $role_check ) {
-
-	add_filter( 'body_class', 'my_body_classes' );
-	function my_body_classes( $classes ) {
-
-		$classes[] = 'woocommerce-account';
-		return $classes;
-
-	}
-
 	$current_user  = wp_get_current_user();
 	$belongs_to    = get_field( 'partner', "user_{$current_user->ID}" );
 	$business_name = get_the_title( $belongs_to[0] );
 	$business_link = get_field( 'partner_link', $belongs_to[0] );
-
+}
 ?>
-<link href="https://cdn.jsdelivr.net/npm/vuetify@2.0.2/dist/vuetify.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/vuetify@2.0.10/dist/vuetify.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/@mdi/font@3.x/css/materialdesignicons.min.css" rel="stylesheet">
-<style>
-
-html body {
-	font-size: 120%;
-}
-
-.theme--light.v-application {
-	background: none;
-}
-
-.table_users tbody tr td:nth-child(6) {
-	 width:200px;
-	 display:block;
-}
-
-.strikethrough {
-	text-decoration: line-through;
-}
-
-.usage.multisite {
-	width: 100px;
-}
-
-.usage.provider {
-	width: 94px;
-}
-
-.usage.visits {
-	width: 130px;
-}
-
-.usage.storage {
-	width: 100px;
-}
-
-.usage button {
-	margin: 0px;
-	font-size: 11px;
-  font-weight: bold;
-}
-
-.usage button .v-icon.material-icons.theme--light {
-	display:none;
-}
-
-.usage button.v-btn--active .v-icon.material-icons.theme--light {
-	display:inline-block;
-}
-
-.desc .usage button.v-btn--active .v-icon.material-icons.theme--light {
-	-webkit-transform: rotate(-180deg);
-	transform: rotate(-180deg);
-}
-
-.usage {
-	display: inline-block;
-	text-align: center;
-	font-size: 13px;
-	padding: 0px;
-	margin: 0px;
-}
-
-.graph-svg-tip.comparison .title {
-	font-size: 12px !important;
-}
-
-g.chart-legend {
-	display: none;
-}
-
-.table-dns {
-	border-collapse: collapse;
-	table-layout:fixed;
-}
-
-.table-dns td {
-	padding: 0 1em 0 0em;
-    margin-bottom: 0px;
-    line-height: 1.50em;
-    font-size: 16px;
-    border-top: 1px solid #8a8a8a;
-}
-.table-dns td.value {
-	overflow-wrap: break-word;
-    word-wrap: break-word;
-    -ms-word-break: break-all;
-    word-break: break-all;
-    word-break: break-word;
-    -ms-hyphens: auto;
-    -moz-hyphens: auto;
-    -webkit-hyphens: auto;
-    hyphens: auto;
-}
-.table-dns tr.delete {
-	color: #ff00008c;
-    background: #80808021;
-}
-.table-dns tr.delete td:not(:last-child) {
-    text-decoration: line-through;
-}
-.table-dns td:last-child {
-	padding: 0px;
-}
-
-.table-layout-fixed table {
-	border-collapse: collapse;
-	table-layout:fixed;
-}
-
-.text-right .usage:last-child {
-	border-right: 0px;
-}
-
-.v-input {
-	margin-top: 0px;
-}
-.siteFilter .v-input__control { 
-	min-height: 42px;
-}
-.site .v-tabs--right .v-tab {
-	min-width: 40px;
-	padding: 0 10px;
-}
-.v-tabs__container--icons-and-text {
-	height: 54px;
-}
-.v-tabs__container--fixed-tabs .v-tabs__div, .v-tabs__container--icons-and-text .v-tabs__div {
-	min-width: 0px;
-}
-
-.theme--dark .theme--light .v-select__selections {
-	color: rgb(22, 101, 192);
-	padding-left: 6px;
-}
-
-.theme--dark .theme--light .v-icon {
-	color: rgba(0,0,0,.54);
-}
-
-.application.theme--light a {
-	color: inherit;
-}
-
-.v-application .dns_introduction a {
-	text-decoration: underline;
-	font-weight: bold;
-	color: #fff;
-}
-
-.application.theme--light .dns_introduction p {
-	margin-bottom: 0px;
-}
-
-.table-dns td button.v-btn.v-btn--flat.v-btn--icon.v-size--small {
-	max-width: 30px;
-	max-height: 30px;
-}
-
-.theme--light.v-table a,
-.theme--light.v-table a:hover {
-	color: #1976d2;
-}
-
-.timeline .theme--light.v-table p {
-	margin-bottom: 0px;
-	padding-bottom: 0px;
-	line-height: initial;
-}
-.timeline .theme--light.v-table ul {
-	margin: 5px 0px;
-}
-.timeline .theme--light.v-table li {
-    list-style: disc;
-    margin-left: 1.5em;
-}
-.timeline .theme--light.v-table h1,
-.timeline .theme--light.v-table h2,
-.timeline .theme--light.v-table h3,
-.timeline .theme--light.v-table h4,
-.timeline .theme--light.v-table h5,
-.timeline .theme--light.v-table h6 {
-	margin: 0px;
-}
-
-
-.timeline table.theme--light.v-table tbody td {
-	vertical-align: top;
-	padding: 1.2em 1.8em;
-}
-
-.v-expansion-panel__header {
-	line-height: 0.8em;
-}
-
-ul.v-expansion-panel.theme--light {
-    margin: 0px;
-    padding: 0px;
-}
-
-.theme--light.v-expansion-panels .v-expansion-panel.site.toggleSelect .v-expansion-panel-header {
-    padding-left: 75px;
-}
-
-.v-expansion-panel--inset .v-expansion-panel__container, .v-expansion-panel--popout .v-expansion-panel__container {
-    max-width: 100%;
-}
-
-.v-expansion-panel--inset .v-expansion-panel__container--active, .v-expansion-panel--popout .v-expansion-panel__container--active {
-	margin: 16px 0px;
-}
-
-table.v-table tbody td, table.v-table tbody th {
-	border: 0px;
-}
-
-.quicksave-table table.v-table tbody td, .quicksave-table table.v-table tbody th {
-	height:40px;
-}
-
-.quicksave-table table tr:hover button.v-btn--flat:before {
-	background-color: currentColor;
-}
-
-pre {
-	font-size: 15px;
-	padding: 10px;
-}
-
-#code_diff > div {
-	white-space:pre-wrap;
-}
-
-.v-expansion-panel__body {
-	position: relative;
-}
-
-.v-expansion-panel.site:before {
-	box-shadow: none;
-}
-
-.theme--light.v-expansion-panels .v-expansion-panel.site {
-	background: none;
-}
-
-.site .v-expansion-panel-content__wrap {
-	padding: 0px;
-	max-width: 100%;
-}
-
-.v-expansion-panel.v-expansion-panel--active.site:before {
-	box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
-}
-
-.theme--light.v-expansion-panels .v-expansion-panel
-
-.application .site .theme--dark.icon, .site .theme--dark .v-icon {
-	font-size: 1em;
-	padding-left: 0.3em;
-}
-
-.v-dialog__content--active {
-	z-index: 999999 !important;
-}
-
-li.v-expansion-panel__container {
-    list-style: none;
-}
-
-.v-card hr {
-	margin: 4px 0;
-	background-color: #eaeaea;
-}
-.v-btn__content span {
-    padding: 0 0 0 6px;
-}
-.v-toolbar__items i.v-icon.theme--dark {
-    margin-left: 2%;
-}
-table.v-datatable.v-table.v-datatable--show-select thead tr th:nth-child(1),
-table.v-datatable.v-table.v-datatable--show-select tbody tr td:nth-child(1) {
-	width: 42px;
-	padding: 0 0 0px 22px;
-}
-.v-expansion-panel__body .v-card.bordered {
-	margin: 2em;
-	padding: 0px;
-	box-shadow: 0 2px 1px -1px rgba(0,0,0,.2), 0 1px 1px 0 rgba(0,0,0,.14), 0 1px 3px 0 rgba(0,0,0,.12);
-}
-.v-expansion-panel--active .v-card .pass-mask {
-	display: inline-block;
-}
-.v-expansion-panel-content .v-card .pass-reveal {
-	display: none;
-}
-.v-expansion-panel-content .v-card:hover .pass-mask {
-	display: none;
-}
-.v-expansion-panel-content .v-card:hover .pass-reveal {
-	display: inline-block;
-}
-
-.static.v-badge {
-	position: fixed;
-  top: 23%;
-  right: 0px;
-  background: white;
-  z-index: 99999;
-  padding: 1em 1em .5em 1em;
-  box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
-}
-
-.v-select.v-text-field input, .v-input input, .v-text-field input {
-	background: none;
-	border: none;
-}
-
-.content-area ul.v-pagination {
-	display: inline-flex;
-	margin: 0px;
-}
-
-.alignright.input-group {
-	width: auto;
-}
-
-a.v-tabs__item:hover {
-	color:inherit;
-}
-
-.pagination span.pagination__more {
-	margin: .3rem;
-	border: 0px;
-	padding: 0px;
-}
-
-[v-cloak] > * {
-  display:none;
-}
-[v-cloak]::before {
-  display: block;
-  position: relative;
-  left: 0%;
-  top: 0%;
-	max-width: 1000px;
-	margin:auto;
-	padding-bottom: 10em;
-}
-.application.theme--light {
-	background-color: #fff;
-}
-
-.application .theme--light.btn:not(.btn--icon):not(.btn--flat), .theme--light .btn:not(.btn--icon):not(.btn--flat) {
-	padding: 0px;
-}
-
-.application .theme--light.v-input:not(.v-input--is-disabled) input, .application .theme--light.v-input:not(.v-input--is-disabled) textarea, .theme--light .v-input:not(.v-input--is-disabled) input, .theme--light .v-input:not(.v-input--is-disabled) textarea {
-	border-radius: 0px;
-}
-
-.secondary {
-	background: transparent !important;
-}
-
-table {
-	margin: 0px;
-}
-
-.menu__content--select .card {
-	margin:0px;
-	padding:0px;
-}
-
-.card  {
-	margin:0px;
-	padding:0px;
-}
-.card .list {
-	float:none;
-	width:auto;
-	margin:0px;
-	padding:0px;
-}
-button {
-	padding: 0 16px;
-}
-button.btn--icon {
-	padding:0px;
-}
-.theme--dark.v-btn, .theme--dark .v-btn {
-	color: #fff !important;
-}
-span.text-right {
-	float:right;
-}
-.input-group.input-group--selection-controls.switch .input-group--selection-controls__container {
-	margin: auto;
-	margin-top: 1.5em;
-}
-
-table.table .input-group--selection-controls {
-	top: 10px;
-	position: relative;
-}
-
-table.table .input-group.input-group--selection-controls.switch .input-group--selection-controls__container {
-	margin:0px;
-}
-
-.application .theme--light.v-pagination__item--active, .theme--light button.v-pagination__item--active {
-	color: #fff !important;
-}
-
-body button.v-pagination__item:hover {
-    box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
-	}
-
-table.v-table thead tr,
-table.v-table thead th,
-table.v-table tbody td,
-table.v-table tbody th,
-table.v-table tfoot td {
-	vertical-align: middle;
-	border:0px;
-}
-.v-data-table td, .v-data-table th {
-	vertical-align: middle;
-	line-height: 1em;
-}
-.v-data-table td p {
-	line-height: 1em;
-}
-.v-data-table td p:last-child {
-	margin-bottom: 0px;
-	padding-bottom: 0px;
-}
-
-.v-btn {
-	letter-spacing: 0em;
-}
-.v-btn--active, .v-btn:focus, .v-btn:hover, button.v-expansion-panel-header:focus {
-	background: none;
-}
-table.v-table tfoot td {
-	font-weight: 400;
-	font-size: 13px;
-}
-div.update_logs table tr td:nth-child(1) {
-	white-space: nowrap;
-}
-.upload-drag label.btn {
-  margin-bottom: 0;
-  margin-right: 1rem;
-}
-.upload-drag label.btn.btn-primary.file-uploads.file-uploads-html5.file-uploads-drop {
-    display: none;
-}
-.upload-drag .drop-active {
-  top: 0;
-  bottom: 0;
-  right: 0;
-  left: 0;
-  position: fixed;
-  z-index: 9999;
-  opacity: .6;
-  text-align: center;
-  background: #000;
-}
-.upload-drag .drop-active h3 {
-  margin: -.5em 0 0;
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  -webkit-transform: translateY(-50%);
-  -ms-transform: translateY(-50%);
-  transform: translateY(-50%);
-  font-size: 40px;
-  color: #fff;
-  padding: 0;
-}
-</style>
+<link href="/wp-content/plugins/captaincore/public/css/captaincore-public-2019-09-04.css" rel="stylesheet">
 <?php if ( substr( $_SERVER['SERVER_NAME'], -4) == 'test' ) { ?>
-<script src="/wp-content/plugins/captaincore-gui/public/js/vue.js"></script>
-<script src="/wp-content/plugins/captaincore-gui/public/js/qs.js"></script>
-<script src="/wp-content/plugins/captaincore-gui/public/js/axios.min.js"></script>
-<script src="/wp-content/plugins/captaincore-gui/public/js/vuetify.min.js"></script>
+<script src="/wp-content/plugins/captaincore/public/js/vue.js"></script>
+<script src="/wp-content/plugins/captaincore/public/js/qs.js"></script>
+<script src="/wp-content/plugins/captaincore/public/js/axios.min.js"></script>
+<script src="/wp-content/plugins/captaincore/public/js/vuetify.min.js"></script>
 <?php } else { ?>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.min.js"></script>
 <script src="https://unpkg.com/qs@6.5.2/dist/qs.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vuetify@2.0.2/dist/vuetify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.0.10/dist/vuetify.min.js"></script>
 <?php } ?>
 <script src="https://unpkg.com/lodash@4.16.0"></script>
 <script>
 lodash = _.noConflict();
 </script>
 <link href="https://cdn.jsdelivr.net/npm/frappe-charts@1.2.0/dist/frappe-charts.min.css" rel="stylesheet">
-<script src="/wp-content/plugins/captaincore-gui/public/js/frappe-charts.js"></script>
+<script src="/wp-content/plugins/captaincore/public/js/frappe-charts.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/numeral@2.0.6/numeral.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue-upload-component@2.8.20/dist/vue-upload-component.js"></script>
 <script>
-
 ajaxurl = "/wp-admin/admin-ajax.php";
-
 var pretty_timestamp_options = {
     weekday: "short", year: "numeric", month: "short",
     day: "numeric", hour: "2-digit", minute: "2-digit"
@@ -536,12 +51,84 @@ var pretty_timestamp_options = {
 // Returns: "Monday, Jun 18, 2018, 7:44 PM"
 Vue.component('file-upload', VueUploadComponent);
 </script>
+</head>
+<body>
 <div id="app" v-cloak>
 	<v-app>
-		<v-content>
+	  <v-app-bar color="blue darken-3" dark app fixed style="left:0px;height:64px;">
+	 	 <v-app-bar-nav-icon @click.stop="drawer = !drawer" class="d-md-none d-lg-none d-xl-none"></v-app-bar-nav-icon>
+         <v-toolbar-title>
+		 <v-row>
+		 <v-col>
+			<v-list flat color="blue darken-3">
+		 	<v-list-item href="#sites" style="padding:0px;" flat class="not-active">
+			 	<v-img :src="captaincore_logo" contain max-width="32" max-height="32" v-if="captaincore_logo" class="mr-4"></v-img>
+				 {{ captaincore_name }}
+			</v-list-item>
+			<div id="clipboard" style="position:absolute;opacity:0"></div>
+			</v-list>
+		 </v-col>
+		</a>
+		 </v-row>
+		</v-toolbar-title>
+      </v-app-bar>
+	  <v-navigation-drawer v-model="drawer" app mobile-break-point="960" clipped>
+      <v-list>
+        <v-list-item link href="#sites">
+          <v-list-item-icon>
+            <v-icon>mdi-wrench</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Sites</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item link href="#dns">
+          <v-list-item-icon>
+            <v-icon>mdi-library-books</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>DNS</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+		<v-list-item link href="#cookbook" v-show="role == 'administrator'">
+        <v-list-item-icon>
+            <v-icon>mdi-book-open-variant</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Cookbook</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item link href="#handbook" v-show="role == 'administrator'">
+          <v-list-item-icon>
+            <v-icon>mdi-map</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Handbook</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item link :href="billing_link" target="_blank" v-show="billing_link">
+          <v-list-item-icon>
+            <v-icon>mdi-currency-usd</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Billing  <v-icon small>mdi-open-in-new</v-icon></v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item link @click="signOut()">
+          <v-list-item-icon>
+            <v-icon>mdi-logout</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Log Out</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+	  </v-navigation-drawer>
+	  <v-content>
+		<v-container fluid style="padding:0px">
 		<v-badge overlap left class="static" v-if="runningJobs">
 			<span slot="badge">{{ runningJobs }}</span>
-			<a @click.stop="view_jobs = true; $vuetify.goTo( '#sites' )"><v-icon large color="grey lighten-1">fas fa-cogs</v-icon></a>
+			<a @click.stop="view_jobs = true; $vuetify.goTo( '#sites' )"><v-icon large color="grey lighten-1">mdi-cogs</v-icon></a>
 			<template>
 			  <v-progress-linear :indeterminate="true" class="my-2"></v-progress-linear>
 			</template>
@@ -592,7 +179,7 @@ Vue.component('file-upload', VueUploadComponent);
 				<h3>Drop files to upload</h3>
 			</div>
 			<div class="upload-drag-btn">
-				<file-upload class="btn btn-primary" @input-file="inputFile" post-action="/wp-content/plugins/captaincore-gui/upload.php" :drop="true" v-model="upload" ref="upload"></file-upload>
+				<file-upload class="btn btn-primary" @input-file="inputFile" post-action="/wp-content/plugins/captaincore/upload.php" :drop="true" v-model="upload" ref="upload"></file-upload>
 			</div>
 		</div>
 		</div>
@@ -691,7 +278,7 @@ Vue.component('file-upload', VueUploadComponent);
 				<h3>Drop files to upload</h3>
 			</div>
 			<div class="upload-drag-btn">
-				<file-upload class="btn btn-primary" @input-file="inputFile" post-action="/wp-content/plugins/captaincore-gui/upload.php" :drop="true" v-model="upload" ref="upload"></file-upload>
+				<file-upload class="btn btn-primary" @input-file="inputFile" post-action="/wp-content/plugins/captaincore/upload.php" :drop="true" v-model="upload" ref="upload"></file-upload>
 			</div>
 		</div>
 		</div>
@@ -844,15 +431,15 @@ Vue.component('file-upload', VueUploadComponent);
 							<td class="value" v-if="record.type == 'MX'">
 								<v-layout v-for="(value, value_index) in record.update.record_value">
 									<v-flex xs3><v-text-field label="Level" :value="value.level" @change.native="value.level = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-text-field></v-flex>
-									<v-flex xs9><v-text-field label="Value" :value="value.value" @change.native="value.value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'><template v-slot:append-outer><v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecordValue( index, value_index )" :disabled="dialog_domain.saving"><v-icon small>fas fa-trash</v-icon></v-btn></template></v-text-field></v-flex>
+									<v-flex xs9><v-text-field label="Value" :value="value.value" @change.native="value.value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'><template v-slot:append-outer><v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecordValue( index, value_index )" :disabled="dialog_domain.saving"><v-icon>mdi-delete</v-icon></v-btn></template></v-text-field></v-flex>
 								</v-layout>
-								<v-btn depressed small class="ma-0 mb-3" @click="addRecordValue( index )" v-show="!dialog_domain.loading && !dialog_domain.saving">Add Additional Record</v-btn>
+								<v-btn icon small color="primary" class="ma-0 mb-3" @click="addRecordValue( index )" v-show="!dialog_domain.loading && !dialog_domain.saving"><v-icon>mdi-plus-box</v-icon></v-btn>
 							</td>
 							<td class="value" v-else-if="record.type == 'A' || record.type == 'AAAA' || record.type == 'ANAME' || record.type == 'TXT' || record.type == 'SPF'">
 								<div v-for="(value, value_index) in record.update.record_value" :key="`value-${index}-${value_index}`">
-									<v-text-field label="Value" :value="value.value" @change.native="value.value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'><template v-slot:append-outer><v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecordValue( index, value_index )" :disabled="dialog_domain.saving"><v-icon small>fas fa-trash</v-icon></v-btn></template></v-text-field>
+									<v-text-field label="Value" :value="value.value" @change.native="value.value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'><template v-slot:append-outer><v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecordValue( index, value_index )" :disabled="dialog_domain.saving"><v-icon>mdi-delete</v-icon></v-btn></template></v-text-field>
 								</div>
-								<v-btn depressed small class="ma-0 mb-3" @click="addRecordValue( index )" v-show="!dialog_domain.loading && !dialog_domain.saving">Add Additional Record</v-btn>
+								<v-btn icon small color="primary" class="ma-0 mb-3" @click="addRecordValue( index )" v-show="!dialog_domain.loading && !dialog_domain.saving"><v-icon>mdi-plus-box</v-icon></v-btn>
 							</td>
 							<td class="value" v-else-if="record.type == 'SRV'">
 								<v-layout v-for="value in record.update.record_value">
@@ -861,32 +448,32 @@ Vue.component('file-upload', VueUploadComponent);
 									<v-flex xs2><v-text-field label="Port" :value="value.port" @change.native="value.port = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-text-field></v-flex>
 									<v-flex xs6><v-text-field label="Value" :value="value.value" @change.native="value.value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-text-field></v-flex>
 								</v-layout>
-								<v-btn depressed small class="ma-0 mb-3" @click="addRecordValue( index )" v-show="!dialog_domain.loading && !dialog_domain.saving">Add Additional Record</v-btn>
+								<v-btn icon small color="primary" class="ma-0 mb-3" @click="addRecordValue( index )" v-show="!dialog_domain.loading && !dialog_domain.saving"><v-icon>mdi-plus-box</v-icon></v-btn>
 							</td>
 							<td class="value" v-else>
 								<v-text-field label="Value" :value="record.update.record_value" @change.native="record.update.record_value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-text-field>
 							</td>
 							<td><v-text-field label="TTL" :value="record.update.record_ttl" @change.native="record.update.record_ttl = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-text-field></td>
 							<td class="text-right">
-								<v-btn text small icon color="primary" class="ma-0 pa-0" @click="viewRecord( record.id )" :disabled="dialog_domain.saving"><v-icon small>fas fa-edit</v-icon></v-btn>
-								<v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecord( record.id )" :disabled="dialog_domain.saving"><v-icon small>fas fa-trash</v-icon></v-btn>
+								<v-btn text small icon color="primary" class="ma-0 pa-0" @click="viewRecord( record.id )" :disabled="dialog_domain.saving"><v-icon>mdi-pencil-box</v-icon></v-btn>
+								<v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecord( record.id )" :disabled="dialog_domain.saving"><v-icon>mdi-delete</v-icon></v-btn>
 							</td>
 						</template>
 						<template v-else-if="record.new">
-							<td><v-select v-model="record.type" @input="changeRecordType( index )" item-text="name" item-value="value" :items='[{"name":"A","value":"A"},{"name":"AAAA","value":"AAAA"},{"name":"ANAME","value":"ANAME"},{"name":"CNAME","value":"CNAME"},{"name":"HTTP Redirect","value":"HTTPRedirection"},{"name":"MX","value":"MX"},{"name":"SPF","value":"SPF"},{"name":"SRV","value":"SRV"},{"name":"TXT","value":"TXT"}]' label="Type" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-select></td>
+							<td><v-select v-model="record.type" @input="changeRecordType( index )" item-text="name" item-value="value" :items='[{"name":"A","value":"A"},{"name":"AAAA","value":"AAAA"},{"name":"ANAME","value":"ANAME"},{"name":"CNAME","value":"CNAME"},{"name":"HTTP Redirect","value":"HTTPRedirection"},{"name":"MX","value":"MX"},{"name":"SRV","value":"SRV"},{"name":"TXT","value":"TXT"}]' label="Type" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-select></td>
 							<td><v-text-field label="Name" :value="record.update.record_name" @change.native="record.update.record_name = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-text-field></td>
 							<td class="value" v-if="record.type == 'MX'">
 								<v-layout v-for="(value, value_index) in record.update.record_value">
 									<v-flex xs3><v-text-field label="Level" :value="value.level" @change.native="value.level = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-text-field></v-flex>
-									<v-flex xs9><v-text-field label="Value" :value="value.value" @change.native="value.value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'><template v-slot:append-outer><v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecordValue( index, value_index )" :disabled="dialog_domain.saving"><v-icon small>fas fa-trash</v-icon></v-btn></template></v-text-field></v-flex>
+									<v-flex xs9><v-text-field label="Value" :value="value.value" @change.native="value.value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'><template v-slot:append-outer><v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecordValue( index, value_index )" :disabled="dialog_domain.saving"><v-icon>mdi-delete</v-icon></v-btn></template></v-text-field></v-flex>
 								</v-layout>
-								<v-btn depressed small class="ma-0 mb-3" @click="addRecordValue( index )" v-show="!dialog_domain.loading && !dialog_domain.saving">Add Additional Record</v-btn>
+								<v-btn icon small color="primary" class="ma-0 mb-3" @click="addRecordValue( index )" v-show="!dialog_domain.loading && !dialog_domain.saving"><v-icon>mdi-plus-box</v-icon></v-btn>
 							</td>
 							<td class="value" v-else-if="record.type == 'A' || record.type == 'AAAA' || record.type == 'ANAME' || record.type == 'TXT' || record.type == 'SPF'">
 								<div v-for="(value, value_index) in record.update.record_value" :key="`value-${index}-${value_index}`">
-									<v-text-field label="Value" :value="value.value" @change.native="value.value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'><template v-slot:append-outer><v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecordValue( index, value_index )" :disabled="dialog_domain.saving"><v-icon small>fas fa-trash</v-icon></v-btn></template></v-text-field>
+									<v-text-field label="Value" :value="value.value" @change.native="value.value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'><template v-slot:append-outer><v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecordValue( index, value_index )" :disabled="dialog_domain.saving"><v-icon>mdi-delete</v-icon></v-btn></template></v-text-field>
 								</div>
-								<v-btn depressed small class="ma-0 mb-3" @click="addRecordValue( index )" v-show="!dialog_domain.loading && !dialog_domain.saving">Add Additional Record</v-btn>
+								<v-btn icon small color="primary" class="ma-0 mb-3" @click="addRecordValue( index )" v-show="!dialog_domain.loading && !dialog_domain.saving"><v-icon>mdi-plus-box</v-icon></v-btn>
 							</td>
 							<td class="value" v-else-if="record.type == 'SRV'">
 								<v-layout v-for="value in record.update.record_value">
@@ -900,26 +487,26 @@ Vue.component('file-upload', VueUploadComponent);
 								<v-text-field label="Value" :value="record.update.record_value" @change.native="record.update.record_value = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-text-field>
 							</td>
 							<td><v-text-field label="TTL" :value="record.update.record_ttl" @change.native="record.update.record_ttl = $event.target.value" v-bind:class='{ "v-input--is-disabled": dialog_domain.saving }'></v-text-field></td>
-							<td class="text-right">
-								<v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecord( index )" :disabled="dialog_domain.saving"><v-icon small>fas fa-trash</v-icon></v-btn>
+							<td class="text-right" style="padding-top: 20px;">
+								<v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteRecord( index )" :disabled="dialog_domain.saving"><v-icon>mdi-delete</v-icon></v-btn>
 							</td>
 						</template>
 						<template v-else>
 							<td>{{ record.type }}</td>
-							<td>{{ record.name }}</td>
+							<td class="name">{{ record.name }}</td>
 							<td class="value" v-if="record.type == 'MX'"><div v-for="value in record.value">{{ value.level }} {{ value.value }}</div></td>
 							<td class="value" v-else-if="record.type == 'A' || record.type == 'AAAA' || record.type == 'ANAME' || record.type == 'TXT' || record.type == 'SPF'"><div v-for="value in record.value">{{ value.value }}</div></td>
 							<td class="value" v-else-if="record.type == 'SRV'"><div v-for="value in record.value">{{ value.priority }} {{ value.weight }} {{ value.port }} {{ value.value }}</div></td>
 							<td class="value" v-else>{{ record.value }}</td>
 							<td>{{ record.ttl }}</td>
 							<td class="text-right">
-								<v-btn text small icon color="primary" class="ma-0 pa-0" @click="editRecord( record.id )" :disabled="dialog_domain.saving"><v-icon small>fas fa-edit</v-icon></v-btn>
-								<v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteCurrentRecord( record.id )" :disabled="dialog_domain.saving"><v-icon small>fas fa-trash</v-icon></v-btn>
+								<v-btn text small icon color="primary" class="ma-0 pa-0" @click="editRecord( record.id )" :disabled="dialog_domain.saving"><v-icon>mdi-pencil-box</v-icon></v-btn>
+								<v-btn text small icon color="primary" class="ma-0 pa-0" @click="deleteCurrentRecord( record.id )" :disabled="dialog_domain.saving"><v-icon>mdi-delete</v-icon></v-btn>
 							</td>
 						</template>
 						</tr>
 					</table>
-					<v-btn small depressed class="ma-0" @click="addRecord()" v-show="!dialog_domain.loading && !dialog_domain.saving">Add Additional Record</v-btn>
+					<v-btn depressed class="ma-0" @click="addRecord()" v-show="!dialog_domain.loading && !dialog_domain.saving">Add Additional Record</v-btn>
 				</v-flex>
 				<v-flex xs12>
 					<v-progress-linear :indeterminate="true" v-show="dialog_domain.saving"></v-progress-linear>
@@ -1106,9 +693,9 @@ Vue.component('file-upload', VueUploadComponent);
 			</v-toolbar>
 			<v-card-text style="max-height: 100%;">
 				<div class="caption mb-3">
-					<v-icon small v-show="dialog_handbook.process.time_estimate != ''" style="padding:0px 5px">far fa-clock</v-icon>{{ dialog_handbook.process.time_estimate }} 
-					<v-icon small v-show="dialog_handbook.process.repeat != '' && dialog_handbook.process.repeat != null" style="padding:0px 5px">fas fa-redo-alt</v-icon>{{ dialog_handbook.process.repeat }} 
-					<v-icon small v-show="dialog_handbook.process.repeat_quantity != '' && dialog_handbook.process.repeat_quantity != null" style="padding:0px 5px">fas fa-retweet</v-icon>{{ dialog_handbook.process.repeat_quantity }}
+					<v-icon small v-show="dialog_handbook.process.time_estimate != ''" style="padding:0px 5px">mdi-clock-outline</v-icon>{{ dialog_handbook.process.time_estimate }} 
+					<v-icon small v-show="dialog_handbook.process.repeat != '' && dialog_handbook.process.repeat != null" style="padding:0px 5px">mdi-calendar-repeat</v-icon>{{ dialog_handbook.process.repeat }} 
+					<v-icon small v-show="dialog_handbook.process.repeat_quantity != '' && dialog_handbook.process.repeat_quantity != null" style="padding:0px 5px">mdi-repeat</v-icon>{{ dialog_handbook.process.repeat_quantity }}
 				</div>
 				<span v-html="dialog_handbook.process.description"></span>
 			</v-card-text>
@@ -1212,9 +799,21 @@ Vue.component('file-upload', VueUploadComponent);
 		</v-dialog>
 		<v-dialog v-model="dialog_new_domain.show" scrollable width="500">
 		<v-card>
+			<v-toolbar flat dark color="primary">
+			<v-btn icon dark @click.native="dialog_new_domain.show = false">
+				<v-icon>close</v-icon>
+			</v-btn>
+			<v-toolbar-title>Add Domain</v-toolbar-title>
+				<v-spacer></v-spacer>
+			</v-toolbar>
 			<v-card-text>
 				<v-text-field :value="dialog_new_domain.domain.name" @change.native="dialog_new_domain.domain.name = $event.target.value" label="Domain Name" required></v-text-field>
-				<v-autocomplete :value="dialog_new_domain.domain.customer" @change.native="dialog_new_domain.domain.customer = $event.target.value" label="Customer" required></v-autocomplete>
+				<v-autocomplete :items="customers" item-text="name" item-value="customer_id" v-model="dialog_new_domain.domain.customer" label="Customer" required></v-autocomplete>
+				<v-flex xs12 text-right>
+					<v-btn color="primary" dark @click="addDomain()">
+						Save Changes
+					</v-btn>
+				</v-flex>
 			</v-card-text>
 		</v-card>
 		</v-dialog>
@@ -1227,12 +826,12 @@ Vue.component('file-upload', VueUploadComponent);
 			<v-toolbar-title>Configure Defaults</v-toolbar-title>
 				<v-spacer></v-spacer>
 			</v-toolbar>
+			<template v-if="dialog_configure_defaults.loading">
+				<v-progress-linear :indeterminate="true"></v-progress-linear>
+			</template>
 			<v-card-text>
-				<template v-if="dialog_configure_defaults.loading">
-					<v-progress-linear :indeterminate="true"></v-progress-linear>
-				</template>
-				<template v-else>
-				<v-select :items="dialog_configure_defaults.records.map( a => a.account )" label="Account" item-value="id" v-model="dialog_configure_defaults.account" @input="switchConfigureDefaultAccount()">
+				<template v-if="! dialog_configure_defaults.loading">
+				<v-select class="mt-5" :items="dialog_configure_defaults.records.map( a => a.account )" label="Account" item-value="id" v-model="dialog_configure_defaults.account" @input="switchConfigureDefaultAccount()">
 					<template v-slot:selection="data">
 						<span v-html="data.item.name"></span>
 					</template>
@@ -1253,7 +852,7 @@ Vue.component('file-upload', VueUploadComponent);
 					<v-flex xs6 pl-2><v-autocomplete :items="timezones" label="Default Timezone" v-model="dialog_configure_defaults.record.default_timezone"></v-autocomplete></v-flex>
 				</v-layout>
 				<v-layout wrap>
-					<v-flex><v-autocomplete label="Default Plugins" v-model="dialog_configure_defaults.record.default_plugins" ref="default_plugins" :items="default_plugins" item-text="name" item-value="slug" multiple chips deletable-chips></v-autocomplete></v-flex>
+					<v-flex><v-autocomplete label="Default Recipes" v-model="dialog_configure_defaults.record.default_recipes" ref="default_recipes" :items="recipes" item-text="title" item-value="recipe_id" multiple chips deletable-chips></v-autocomplete></v-flex>
 				</v-layout>
 
 				<span class="body-2">Default Users</span>
@@ -1264,12 +863,13 @@ Vue.component('file-upload', VueUploadComponent);
 				>
 				<template v-slot:body="{ items }">
 				<tbody>
-					<tr v-for="item in items" style="border-bottom: 0px;">
+					<tr v-for="(item, index) in items" style="border-bottom: 0px;">
 						<td class="pa-1"><v-text-field :value="item.username" @change.native="item.username = $event.target.value" label="Username"></v-text-field></td>
 						<td class="pa-1"><v-text-field :value="item.email" @change.native="item.email = $event.target.value" label="Email"></v-text-field></td>
 						<td class="pa-1"><v-text-field :value="item.first_name" @change.native="item.first_name = $event.target.value" label="First Name"></v-text-field></td>
 						<td class="pa-1"><v-text-field :value="item.last_name" @change.native="item.last_name = $event.target.value" label="Last Name"></v-text-field></td>
-						<td class="pa-1" style="width:135px;"><v-select :value="item.role" v-model="item.role" :items="roles" label="Role" item-text="name"></v-select></td>
+						<td class="pa-1" style="width:145px;"><v-select :value="item.role" v-model="item.role" :items="roles" label="Role" item-text="name"></v-select></td>
+						<td class="pa-1"><v-btn text small icon color="primary" @click="deleteUserValue( index )"><v-icon small>mdi-delete</v-icon></v-btn></td>
 					</tr>
 				</tbody>
 				</template>
@@ -1316,7 +916,7 @@ Vue.component('file-upload', VueUploadComponent);
 								<v-text-field :value="dialog_new_site.domain" @change.native="dialog_new_site.domain = $event.target.value" label="Domain name" required></v-text-field>
 							</v-flex>
 							<v-flex xs4 class="mx-2">
-						    <v-text-field :value="dialog_new_site.site" @change.native="dialog_new_site.site = $event.target.value" label="Site name" required></v-text-field>
+						    <v-text-field :value="dialog_new_site.site" @change.native="dialog_new_site.site = $event.target.value" label="Site name" required hint="Should match provider site name." persistent-hint></v-text-field>
 							</v-flex>
 							</v-layout>
 							<v-layout>
@@ -1352,57 +952,57 @@ Vue.component('file-upload', VueUploadComponent);
 						<v-flex xs4 class="mx-2">
 						</v-flex>
 						</v-layout>
-								<v-container grid-list-md text-center>
-									<v-layout row wrap>
-										<v-flex xs12 style="height:0px">
-										<v-btn @click="new_site_preload_staging" text icon center relative color="green" style="top:32px;">
-											<v-icon>cached</v-icon>
+							<v-container grid-list-md text-center>
+								<v-layout row wrap>
+									<v-flex xs12 style="height:0px">
+									<v-btn @click="new_site_preload_staging" text icon center relative color="green" style="top:32px;">
+										<v-icon>cached</v-icon>
+									</v-btn>
+									</v-flex>
+									<v-flex xs6 v-for="key in dialog_new_site.environments" :key="key.index">
+									<v-card class="bordered body-1" style="margin:2em;">
+									<div style="position: absolute;top: -20px;left: 20px;">
+										<v-btn depressed disabled right style="background-color: rgb(229, 229, 229)!important; color: #000 !important; left: -11px; top: 0px; height: 24px;">
+											{{ key.environment }} Environment
 										</v-btn>
-										</v-flex>
-										<v-flex xs6 v-for="key in dialog_new_site.environments" :key="key.index">
-										<v-card class="bordered body-1" style="margin:2em;">
-										<div style="position: absolute;top: -20px;left: 20px;">
-											<v-btn depressed disabled right style="background-color: rgb(229, 229, 229)!important; color: #000 !important; left: -11px; top: 0px; height: 24px;">
-												{{ key.environment }} Environment
-											</v-btn>
+									</div>
+									<v-container fluid>
+									<div row>
+										<v-text-field label="Address" :value="key.address" @change.native="key.address = $event.target.value" required  hint="Should match included domain. Example: sitename.kinsta.cloud" persistent-hint></v-text-field>
+										<v-text-field label="Home Directory" :value="key.home_directory" @change.native="key.home_directory = $event.target.value" required></v-text-field>
+										<v-layout>
+										<v-flex xs6 class="mr-1"><v-text-field label="Username" :value="key.username" @change.native="key.username = $event.target.value" required></v-text-field></v-flex>
+										<v-flex xs6 class="ml-1"><v-text-field label="Password" :value="key.password" @change.native="key.password = $event.target.value" required></v-text-field></v-flex>
+										</v-layout>
+										<v-layout>
+										<v-flex xs6 class="mr-1"><v-text-field label="Protocol" :value="key.protocol" @change.native="key.protocol = $event.target.value" required></v-text-field></v-flex>
+										<v-flex xs6 class="mr-1"><v-text-field label="Port" :value="key.port" @change.native="key.port = $event.target.value" required></v-text-field></v-flex>
+										</v-layout>
+										<v-layout>
+										<v-flex xs6 class="mr-1"><v-text-field label="Database Username" :value="key.database_username" @change.native="key.database_username = $event.target.value" required></v-text-field></v-flex>
+										<v-flex xs6 class="mr-1"><v-text-field label="Database Password" :value="key.database_password" @change.native="key.database_password = $event.target.value" required></v-text-field></v-flex>
+										</v-layout>
+										<v-layout>
+											<v-flex xs6 class="mr-1"><v-switch label="Automatic Updates" v-model="key.updates_enabled" false-value="0" true-value="1"></v-switch></v-flex>
+											<v-flex xs6 class="mr-1" v-if="typeof key.offload_enabled != 'undefined'">
+											<v-switch label="Use Offload" v-model="key.offload_enabled" false-value="0" true-value="1" left></v-switch>
+											</v-flex>
+										</v-layout>
+											<div v-if="key.offload_enabled == 1">
+										<v-layout>
+											<v-flex xs6 class="mr-1"><v-select label="Offload Provider" :value="key.offload_provider" @change.native="key.offload_provider = $event.target.value" :items='[{ provider:"s3", label: "Amazon S3" },{ provider:"do", label:"Digital Ocean" }]' item-text="label" item-value="provider" clearable></v-select></v-flex>
+											<v-flex xs6 class="mr-1"><v-text-field label="Offload Access Key" :value="key.offload_access_key" @change.native="key.offload_access_key = $event.target.value" required></v-text-field></v-flex>
+										</v-layout>
+										<v-layout>
+											<v-flex xs6 class="mr-1"><v-text-field label="Offload Secret Key" :value="key.offload_secret_key" @change.native="key.offload_secret_key = $event.target.value" required></v-text-field></v-flex>
+											<v-flex xs6 class="mr-1"><v-text-field label="Offload Bucket" :value="key.offload_bucket" @change.native="key.offload_bucket = $event.target.value" required></v-text-field></v-flex>
+										</v-layout>
+										<v-layout>
+											<v-flex xs6 class="mr-1"><v-text-field label="Offload Path" :value="key.offload_path" @change.native="key.offload_path = $event.target.value" required></v-text-field></v-flex>
+										</v-layout>
 										</div>
-										<v-container fluid>
-										<div row>
-											<v-text-field label="Address" :value="key.address" @change.native="key.address = $event.target.value" required></v-text-field>
-											<v-text-field label="Home Directory" :value="key.home_directory" @change.native="key.home_directory = $event.target.value" required></v-text-field>
-											<v-layout>
-											<v-flex xs6 class="mr-1"><v-text-field label="Username" :value="key.username" @change.native="key.username = $event.target.value" required></v-text-field></v-flex>
-											<v-flex xs6 class="ml-1"><v-text-field label="Password" :value="key.password" @change.native="key.password = $event.target.value" required></v-text-field></v-flex>
-											</v-layout>
-											<v-layout>
-											<v-flex xs6 class="mr-1"><v-text-field label="Protocol" :value="key.protocol" @change.native="key.protocol = $event.target.value" required></v-text-field></v-flex>
-											<v-flex xs6 class="mr-1"><v-text-field label="Port" :value="key.port" @change.native="key.port = $event.target.value" required></v-text-field></v-flex>
-											</v-layout>
-											<v-layout>
-											<v-flex xs6 class="mr-1"><v-text-field label="Database Username" :value="key.database_username" @change.native="key.database_username = $event.target.value" required></v-text-field></v-flex>
-											<v-flex xs6 class="mr-1"><v-text-field label="Database Password" :value="key.database_password" @change.native="key.database_password = $event.target.value" required></v-text-field></v-flex>
-											</v-layout>
-											<v-layout>
-												<v-flex xs6 class="mr-1"><v-switch label="Automatic Updates" v-model="key.updates_enabled" false-value="0" true-value="1"></v-switch></v-flex>
-												<v-flex xs6 class="mr-1" v-if="typeof key.offload_enabled != 'undefined'">
-												<v-switch label="Use Offload" v-model="key.offload_enabled" false-value="0" true-value="1" left></v-switch>
-												</v-flex>
-											</v-layout>
-												<div v-if="key.offload_enabled == 1">
-											<v-layout>
-												<v-flex xs6 class="mr-1"><v-select label="Offload Provider" :value="key.offload_provider" @change.native="key.offload_provider = $event.target.value" :items='[{ provider:"s3", label: "Amazon S3" },{ provider:"do", label:"Digital Ocean" }]' item-text="label" item-value="provider" clearable></v-select></v-flex>
-												<v-flex xs6 class="mr-1"><v-text-field label="Offload Access Key" :value="key.offload_access_key" @change.native="key.offload_access_key = $event.target.value" required></v-text-field></v-flex>
-											</v-layout>
-											<v-layout>
-												<v-flex xs6 class="mr-1"><v-text-field label="Offload Secret Key" :value="key.offload_secret_key" @change.native="key.offload_secret_key = $event.target.value" required></v-text-field></v-flex>
-												<v-flex xs6 class="mr-1"><v-text-field label="Offload Bucket" :value="key.offload_bucket" @change.native="key.offload_bucket = $event.target.value" required></v-text-field></v-flex>
-											</v-layout>
-											<v-layout>
-												<v-flex xs6 class="mr-1"><v-text-field label="Offload Path" :value="key.offload_path" @change.native="key.offload_path = $event.target.value" required></v-text-field></v-flex>
-											</v-layout>
-											</div>
-										</div>
-								 </v-container>
+									</div>
+								</v-container>
 							 </v-card>
 							</v-flex>
 							<v-flex xs12>
@@ -1666,7 +1266,7 @@ Vue.component('file-upload', VueUploadComponent);
 							:items="dialog_mailgun.response"
 							:items-per-page="50"
 							:footer-props="{ itemsPerPageOptions: [50,150,300,{'text':'All','value':-1}] }"
-							>
+						>
 						<template v-slot:body="{ items }">
 						<tbody>
 						<tr v-for="item in items" :key="item.event.id">
@@ -1898,7 +1498,6 @@ Vue.component('file-upload', VueUploadComponent);
 				</v-dialog>
 				<v-dialog
 					v-model="dialog_edit_site.show"
-					hide-overlay
 					transition="dialog-bottom-transition"
 					scrollable
 				>
@@ -2085,54 +1684,54 @@ Vue.component('file-upload', VueUploadComponent);
 					</v-card-text>
 					</v-card>
 				</v-dialog>
-			<v-container fluid v-show="loading_page != true">
-			<v-card tile v-show="route == 'sites'">
-				<v-toolbar color="grey lighten-4" dense light flat>
+			<v-container fluid v-show="loading_page != true" style="padding:0px;">
+			<v-card tile v-show="route == 'sites'" flat>
+				<v-toolbar color="grey lighten-4" light flat>
 					<v-toolbar-title>Sites <small>({{ showingSitesBegin }}-{{ showingSitesEnd }} of {{ filteredSites }})</small></v-toolbar-title>
 					<v-spacer></v-spacer>
 					<v-toolbar-items>
 						<v-tooltip top>
 							<template v-slot:activator="{ on }">
-								<v-btn text small @click="configureDefaults" v-on="on"><v-icon dark small>fas fa-chalkboard</v-icon></v-btn>
+								<v-btn text small @click="configureDefaults" v-on="on"><v-icon dark>mdi-clipboard-check-outline</v-icon></v-btn>
 							</template><span>Configure Defaults</span>
 						</v-tooltip>
 						<v-divider vertical class="mx-1" inset></v-divider>
 						<v-tooltip top>
 							<template v-slot:activator="{ on }">
-								<v-btn text small @click="fetchTimelineLogs" v-bind:class='{ "v-btn--active": view_timeline }' v-on="on"><v-icon dark small>far fa-list-alt</v-icon></v-btn>
+								<v-btn text small @click="fetchTimelineLogs" v-bind:class='{ "v-btn--active": view_timeline }' v-on="on"><v-icon dark>mdi-clipboard-text</v-icon></v-btn>
 							</template><span>Timeline Logs</span>
 						</v-tooltip>
 						<v-divider vertical class="mx-1" inset></v-divider>
 						<v-tooltip top>
 							<template v-slot:activator="{ on }">
-								<v-btn text small @click="view_jobs = !view_jobs" v-bind:class='{ "v-btn--active": view_jobs }' v-on="on"><small v-if="runningJobs">({{ runningJobs }})</small><v-icon dark small>fas fa-cogs</v-icon></v-btn>
+								<v-btn text small @click="view_jobs = !view_jobs" v-bind:class='{ "v-btn--active": view_jobs }' v-on="on"><small v-if="runningJobs">({{ runningJobs }})</small><v-icon dark>mdi-cogs</v-icon></v-btn>
 							</template><span>Job Activity</span>
 						</v-tooltip>
 						<v-divider vertical class="mx-1" inset></v-divider>
 						<v-tooltip top>
 							<template v-slot:activator="{ on }">
-								<v-btn text small @click="dialog_bulk.show = !dialog_bulk.show" v-bind:class='{ "v-btn--active": dialog_bulk.show }' v-on="on"><small v-show="selectedSites > 0">({{ selectedSites }})</small><v-icon dark small>fas fa-cog</v-icon></v-btn>
+								<v-btn text small @click="dialog_bulk.show = !dialog_bulk.show" v-bind:class='{ "v-btn--active": dialog_bulk.show }' v-on="on"><small v-show="selectedSites > 0">({{ selectedSites }})</small><v-icon dark>mdi-settings</v-icon></v-btn>
 							</template><span>Bulk Tools</span>
 						</v-tooltip>
 						<v-divider vertical class="mx-1" inset></v-divider>
 						<v-tooltip top>
 							<template v-slot:activator="{ on }">
-								<v-btn text small @click="advanced_filter = !advanced_filter" v-bind:class='{ "v-btn--active": advanced_filter }' v-on="on"><v-icon dark small>fas fa-filter</v-icon></v-btn>
+								<v-btn text small @click="advanced_filter = !advanced_filter" v-bind:class='{ "v-btn--active": advanced_filter }' v-on="on"><v-icon dark>mdi-filter</v-icon></v-btn>
 							</template><span>Filters</span>
 						</v-tooltip>
 						<template v-if="role == 'administrator'">
 						<v-divider vertical class="mx-1" inset></v-divider>
 						<v-tooltip top>
 							<template v-slot:activator="{ on }">
-								<v-btn text small @click="dialog_new_site.show = true" v-on="on"><v-icon dark small>add</v-icon></v-btn>
+								<v-btn text @click="dialog_new_site.show = true" v-on="on">Add Site <v-icon dark>add</v-icon></v-btn>
 							</template><span>Add Site</span>
 						</v-tooltip>
 						</template>
 					</v-toolbar-items>
 				</v-toolbar>
 				<v-card-text class="my-2">
-				<v-layout justify-center id="sites">
-					<v-flex xs12 sm3>
+				<div class="row mx-2" id="sites">
+					<v-flex xs12 md2>
 						<v-select
 						:items='[50,100,250]'
 						v-model="items_per_page"
@@ -2151,15 +1750,15 @@ Vue.component('file-upload', VueUploadComponent);
 						style="width:120px;display: inline-block;"
 					></v-select>
 					</v-flex>
-						<v-flex xs12 sm6>
+						<v-flex xs12 md8>
 						<div class="text-center">
 							<v-pagination v-if="Math.ceil(filteredSites / items_per_page) > 1" :length="Math.ceil(filteredSites / items_per_page)" v-model="page" :total-visible="7" color="blue darken-3"></v-pagination>
 						</div>
 					</v-flex>
-					<v-flex xs12 sm3>
-						<v-text-field @input="updateSearch" ref="search" label="Search sites" clearable light append-icon="search"></v-text-field>
+					<v-flex xs12 md2>
+						<v-text-field @input="updateSearch" ref="search" label="Search" clearable light append-icon="search"></v-text-field>
 					</v-flex>
-			</v-layout>
+			</div>
 			<v-card v-show="view_timeline == true" class="mb-3">
 				<v-toolbar flat dense dark color="primary">
 				<v-btn icon dark @click.native="view_timeline = false">
@@ -2192,7 +1791,7 @@ Vue.component('file-upload', VueUploadComponent);
 					<td class="justify-center">{{ item.author }}</td>
 					<td class="justify-center">{{ item.title }}</td>
 					<td class="justify-center py-3" v-html="item.description"></td>
-					<td>
+					<td width="170px;">
 						{{ item.websites.map( site => site.name ).join(" ") }}
 					</td>
 				</tr>
@@ -2253,7 +1852,7 @@ Vue.component('file-upload', VueUploadComponent);
 			<v-layout wrap>
 			<v-flex sx12 sm4 px-2>
 			<v-layout>
-			<v-flex>
+			<v-flex style="width:180px;">
 				<v-select
 					v-model="dialog_bulk.environment_selected"
 					:items='[{"name":"Production Environment","value":"Production"},{"name":"Staging Environment","value":"Staging"}]'
@@ -2261,38 +1860,43 @@ Vue.component('file-upload', VueUploadComponent);
 					item-value="value"
 					@change="triggerEnvironmentUpdate( site.id )"
 					light
-					style="height:54px;width:220px;">
+					style="height:54px;">
 				</v-select>
 				</v-flex>
 				<v-flex>
-				<v-btn small icon @click="bulkSyncSites()" style="margin: 10px auto 0 0;">
-					<v-icon small color="grey">fas fa-sync</v-icon>
+				<v-tooltip bottom>
+					<template v-slot:activator="{ on }">
+					<v-btn small icon @click="bulkSyncSites()" style="margin: 12px auto 0 0;" v-on="on">
+						<v-icon color="grey">mdi-sync</v-icon>
 				</v-btn>
+					</template>
+					<span>Manual sync website details</span>
+				</v-tooltip>
 				</v-flex>
 			</v-layout>
 			</v-flex>
 			<v-flex xs12 sm8>
 			<v-tabs v-model="dialog_bulk.tabs_management" background-color="grey lighten-4" icons-and-text right show-arrows height="54">
 				<v-tab href="#tab-Sites">
-					Sites <v-icon small>fas fa-list</v-icon>
+					Sites <v-icon>mdi-format-list-bulleted</v-icon>
 				</v-tab>
 				<v-tab key="Stats" href="#tab-Stats" v-show="role == 'coming-soon'">
-					Stats <v-icon small>far fa-chart-bar</v-icon>
+					Stats <v-icon>mdi-chart-bar</v-icon>
 				</v-tab>
 				<v-tab key="Addons" href="#tab-Addons">
-					Addons <v-icon small>fas fa-plug</v-icon>
+					Addons <v-icon>mdi-power-plug</v-icon>
 				</v-tab>
 				<v-tab key="Users" href="#tab-Users" v-show="role == 'coming-soon'">
-					Users <v-icon small>fas fa-users</v-icon>
+					Users <v-icon>mdi-account-multiple</v-icon>
 				</v-tab>
 				<v-tab key="Updates" href="#tab-Updates" v-show="role == 'coming-soon'">
-					Updates <v-icon small>fas fa-book-open</v-icon>
+					Updates <v-icon>mdi-book-open</v-icon>
 				</v-tab>
 				<v-tab key="Scripts" href="#tab-Scripts">
-					Scripts <v-icon small>fas fa-code</v-icon>
+					Scripts <v-icon>mdi-code-tags</v-icon>
 				</v-tab>
 				<v-tab key="Backups" href="#tab-Backups" v-show="role == 'coming-soon'">
-					Backups <v-icon small>fas fa-hdd</v-icon>
+					Backups <v-icon>mdi-update</v-icon>
 				</v-tab>
 			</v-tabs>
 			</v-flex>
@@ -2305,7 +1909,7 @@ Vue.component('file-upload', VueUploadComponent);
 					<v-toolbar-title>Sites</v-toolbar-title>
 					<v-spacer></v-spacer>
 					<v-toolbar-items>
-						<v-btn text @click="showLogEntryBulk()" v-if="role == 'administrator'">New Log Entry <v-icon dark small>fas fa-check-circle</v-icon></v-btn>
+						<v-btn text @click="showLogEntryBulk()" v-if="role == 'administrator'">New Log Entry <v-icon dark small>mdi-checkbox-marked</v-icon></v-btn>
 						<v-btn text @click="bulkactionLaunch">Launch sites in browser</v-btn>
 					</v-toolbar-items>
 				</v-toolbar>
@@ -2381,28 +1985,51 @@ Vue.component('file-upload', VueUploadComponent);
 						<v-btn small color="primary" dark @click="runCustomCodeBulk()">Run Custom Code</v-btn>
 					</v-flex>
 					<v-flex xs12 sm4>
+						<v-list dense>
 						<v-subheader>Common</v-subheader>
-							<div><v-btn small text @click="viewApplyHttpsUrlsBulk()">
-								<v-icon>launch</v-icon> <span>Apply HTTPS Urls</span>
-							</v-btn></div>
-							<div><v-btn small text @click="siteDeployBulk()">
-								<v-icon>loop</v-icon> <span>Deploy users/plugins</span>
-							</v-btn></div>
-							<div><v-btn small text @click="toggleSiteBulk()">
-								<v-icon>fas fa-toggle-on</v-icon><span>Toggle Site</span>
-							</v-btn></div>
+						<v-list-item @click="viewApplyHttpsUrlsBulk()" dense>
+						<v-list-item-icon>
+							<v-icon>launch</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>Apply HTTPS Urls</v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
+						<v-list-item @click="siteDeployBulk()" dense>
+						<v-list-item-icon>
+							<v-icon>loop</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>Deploy users/plugins</v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
+						<v-list-item @click="toggleSiteBulk()" dense>
+						<v-list-item-icon>
+							<v-icon>mdi-toggle-switch</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>Toggle Site</v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
 						<v-subheader v-show="recipes.filter( r => r.public == 1 ).length > 0">Other</v-subheader>
-						<div v-for="recipe in recipes.filter( r => r.public == 1 )">
-							<v-btn small text @click="runRecipeBulk( recipe.recipe_id )">
-								<v-icon>fas fa-scroll</v-icon> <span>{{ recipe.title }}</span>
-							</v-btn>
-						</div>
+						<v-list-item @click="runRecipeBulk( recipe.recipe_id )" dense v-for="recipe in recipes.filter( r => r.public == 1 )">
+						<v-list-item-icon>
+							<v-icon>mdi-script-text-outline</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title v-text="recipe.title"></v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
 						<v-subheader v-show="recipes.filter( r => r.public != 1 ).length > 0">User</v-subheader>
-						<div v-for="recipe in recipes.filter( r => r.public != 1 )">
-							<v-btn small text @click="loadRecipe( recipe.recipe_id ); $vuetify.goTo( '#script_bulk' );">
-								<v-icon>fas fa-scroll</v-icon> <span>{{ recipe.title }}</span>
-							</v-btn>
-						</div>
+						<v-list-item @click="rloadRecipe( recipe.recipe_id ); $vuetify.goTo( '#script_bulk' );" dense v-for="recipe in recipes.filter( r => r.public != 1 )">
+						<v-list-item-icon>
+							<v-icon>mdi-script-text-outline</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title v-text="recipe.title"></v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
+						</v-list>
 					</v-flex>
 					</v-layout>
 					</v-card-title>
@@ -2498,12 +2125,12 @@ Vue.component('file-upload', VueUploadComponent);
 			</v-card-text>
             </v-card>
 				<div class="text-right" v-show="sites.length > 1">
-				<v-btn-toggle v-model="toggle_site_sort" style="box-shadow: none; border-bottom: 1px solid #e0e0e0;" v-bind:class="sort_direction">
+				<v-btn-toggle v-model="toggle_site_sort" style="box-shadow: none; border-bottom: 1px solid #e0e0e0;" v-bind:class="sort_direction" class="d-none d-md-block">
 					<div class="usage ml-1 multisite"><v-btn text small @click.native.stop="toggle_site_sort = 0; sortSites('multisite')">Multisite<v-icon small light>keyboard_arrow_down</v-icon></v-btn></div>
 					<div class="usage ml-1 visits"><v-btn text small @click.native.stop="toggle_site_sort = 1; sortSites('visits')">Visits<v-icon small light>keyboard_arrow_down</v-icon></v-btn></div>
 					<div class="usage ml-1 storage"><v-btn text small @click.native.stop="toggle_site_sort = 2; sortSites('storage')">Storage <v-icon small light>keyboard_arrow_down</v-icon></v-btn></div>
 					<div class="usage ml-1 provider"><v-btn text small @click.native.stop="toggle_site_sort = 3; sortSites('provider')">Provider <v-icon small light>keyboard_arrow_down</v-icon></v-btn></div>
-					<div style="width: 28px;"></div>
+					<div class="usage" style="width: 28px;"></div>
 				</v-btn-toggle>
 				</div>
 				<v-expansion-panels accordion style="margin-top: 20px">
@@ -2511,36 +2138,36 @@ Vue.component('file-upload', VueUploadComponent);
 					<v-expansion-panel-header>
 					<v-layout align-center justify-space-between row>
 						<div>
-							<v-layout align-center justify-start fill-height font-weight-thin subtitle-1>
+							<v-layout align-center justify-start fill-height font-weight-light subtitle-1>
 							<v-switch v-model="site.selected" @click.native.stop @change="site_selected = null" style="position: absolute; left: 10px; top: 17px;" v-show="dialog_bulk.show == true"></v-switch>
 								<img :src="site.environments[0].screenshot_small" style="width: 50px; margin-right:1em" class="elevation-1" v-show="site.environments[0].screenshot_small">
 							{{ site.name }}
 							</v-layout>
 						</div>
-						<div class="text-right">
-							<div class="usage multisite"><span v-show="site.subsite_count"><v-icon small light >fas fa-network-wired</i></v-icon> {{ site.subsite_count }} sites</span></div>
-							<div class="usage visits"><span v-show="site.visits"><v-icon small light>fas fa-eye</v-icon> {{ site.visits }} <small>yearly</small></span></div>
-							<div class="usage storage"><span v-show="site.storage"><v-icon small light>fas fa-hdd</v-icon> {{ site.storage }}</span></div>
-							<div class="usage provider"><span v-show="site.provider"><v-icon small light>fas fa-server</v-icon> {{ site.provider | formatProvider }}</span></div>
+						<div class="text-right d-none d-md-block">
+							<div class="usage multisite"><span v-show="site.subsite_count"><v-icon light size="20">mdi-lan</i></v-icon> {{ site.subsite_count }} sites</span></div>
+							<div class="usage visits"><span v-show="site.visits"><v-icon light size="20">mdi-eye</v-icon> {{ site.visits }} <small>yearly</small></span></div>
+							<div class="usage storage"><span v-show="site.storage"><v-icon light size="20">mdi-harddisk</v-icon> {{ site.storage }}</span></div>
+							<div class="usage provider"><span v-show="site.provider"><v-icon light size="20">mdi-server</v-icon> {{ site.provider | formatProvider }}</span></div>
 						</div>
 					</v-layout>
 					</v-expansion-panel-header>
 					<v-expansion-panel-content>
 						<v-tabs v-model="site.tabs" background-color="blue darken-3" dark>
 							<v-tab :key="1" href="#tab-Site-Management">
-								Site Management<v-icon>fas fa-cog</v-icon>
+								Site Management <v-icon size="24">mdi-settings</v-icon>
 							</v-tab>
 							<v-tab :key="6" href="#tab-SitePlan" ripple @click="viewUsageBreakdown( site.id )">
-								Site Plan <v-icon>far fa-list-alt</v-icon>
+								Site Plan <v-icon size="24">mdi-chart-donut</v-icon>
 							</v-tab>
 							<v-tab :key="7" href="#tab-Sharing" ripple>
-								Sharing <v-icon>fas fa-user-lock</v-icon>
+								Sharing <v-icon size="24">mdi-account-multiple-plus</v-icon>
 							</v-tab>
 							<v-tab :key="8" href="#tab-Timeline" ripple @click="fetchTimeline( site.id )">
-								Timeline <v-icon>fas fa-stream</v-icon>
+								Timeline <v-icon size="24">mdi-timeline-text-outline</v-icon>
 							</v-tab>
 							<v-tab :key="9" href="#tab-Advanced" ripple>
-								Advanced <v-icon>fas fa-cogs</v-icon>
+								Advanced <v-icon size="24">mdi-cogs</v-icon>
 							</v-tab>
 						</v-tabs>
 						<v-tabs-items v-model="site.tabs">
@@ -2549,7 +2176,7 @@ Vue.component('file-upload', VueUploadComponent);
 								<v-layout wrap>
 									<v-flex sx12 sm4 px-2>
 									<v-layout>
-									<v-flex>
+									<v-flex style="width:180px;">
 										<v-select
 											v-model="site.environment_selected"
 											:items='[{"name":"Production Environment","value":"Production"},{"name":"Staging Environment","value":"Staging"}]'
@@ -2557,74 +2184,163 @@ Vue.component('file-upload', VueUploadComponent);
 											item-value="value"
 											@change="triggerEnvironmentUpdate( site.id )"
 											light
-											style="height:54px;width:220px;">
+											style="height:54px;">
 										</v-select>
 										</v-flex>
 										<v-flex>
-										<v-btn small icon @click="syncSite( site.id )" style="margin: 10px auto 0 0;">
-											<v-icon small color="grey">fas fa-sync</v-icon>
-										</v-btn>
+										<v-tooltip bottom>
+											<template v-slot:activator="{ on }">
+											<v-btn small icon @click="syncSite( site.id )" style="margin: 12px auto 0 0;" v-on="on">
+												<v-icon color="grey">mdi-sync</v-icon>
+											</v-btn>
+											</template>
+											<span>Manual sync website details</span>
+										</v-tooltip>
 										</v-flex>
 									</v-layout>
 									</v-flex>
 									<v-flex xs12 sm8>
 									<v-tabs v-model="site.tabs_management" background-color="grey lighten-4" icons-and-text right show-arrows height="54">
-										<v-tab key="Keys" href="#tab-Keys">
-											Keys <v-icon small>fas fa-key</v-icon>
+										<v-tab key="Info" href="#tab-Info">
+											Info <v-icon>mdi-library-books</v-icon>
 										</v-tab>
 										<v-tab key="Stats" href="#tab-Stats" @click="fetchStats( site.id )">
-											Stats <v-icon small>far fa-chart-bar</v-icon>
+											Stats <v-icon>mdi-chart-bar</v-icon>
 										</v-tab>
 										<v-tab key="Plugins" href="#tab-Addons">
-											Addons <v-icon small>fas fa-plug</v-icon>
+											Addons <v-icon>mdi-power-plug</v-icon>
 										</v-tab>
 										<v-tab key="Users" href="#tab-Users" @click="fetchUsers( site.id )">
-											Users <v-icon small>fas fa-users</v-icon>
+											Users <v-icon>mdi-account-multiple</v-icon>
 										</v-tab>
 										<v-tab key="Updates" href="#tab-Updates" @click="fetchUpdateLogs( site.id )">
-											Updates <v-icon small>fas fa-book-open</v-icon>
+											Updates <v-icon>mdi-book-open</v-icon>
 										</v-tab>
 										<v-tab key="Scripts" href="#tab-Scripts">
-											Scripts <v-icon small>fas fa-code</v-icon>
+											Scripts <v-icon>mdi-code-tags</v-icon>
 										</v-tab>
-										<v-tab key="Backups" href="#tab-Backups" @click="viewQuicksaves( site.id )">
-											Backups <v-icon small>fas fa-hdd</v-icon>
+										<v-tab key="Backups" href="#tab-Backups" @click="viewQuicksaves( site.id ); viewSnapshots( site.id );">
+											Backups <v-icon>mdi-update</v-icon>
 										</v-tab>
 									</v-tabs>
 									</v-flex>
 									</v-layout>
 								</div>
 				<v-tabs-items v-model="site.tabs_management" v-if="site.environments.filter( key => key.environment == site.environment_selected ).length == 1">
-					<v-tab-item :key="1" value="tab-Keys">
+					<v-tab-item :key="1" value="tab-Info">
 						<v-toolbar color="grey lighten-4" dense light flat>
-							<v-toolbar-title>Keys</v-toolbar-title>
+							<v-toolbar-title>Info</v-toolbar-title>
 							<v-spacer></v-spacer>
 						</v-toolbar>
 
 						<v-card v-for="key in site.environments" v-show="key.environment == site.environment_selected" flat>
 							<v-container fluid>
-							<v-layout align-start justify-space-between body-1 pa-3>
-							<div row>
-							<div><h3 class="headline mb-0"><a :href="key.link" target="_blank">{{ key.link }}</a></h3></div>
-								<div><span class="caption">Address</span> {{ key.address }}</div>
-								<div><span class="caption">Username</span> {{ key.username }}</div>
-								<div><span class="caption">Password</span> <div class="pass-mask">##########</div><div class="pass-reveal">{{ key.password }}</div></div>
-								<div><span class="caption">Protocol</span> {{ key.protocol }}</div>
-								<div><span class="caption">Port</span> {{ key.port }}</div>
+							<v-layout body-1 px-6 class="row">
+								<v-flex xs12 md6 class="py-2">
+								<div class="block mt-6">
+									<v-img :src="key.screenshot_large" max-width="400" aspect-ratio="1.6" class="elevation-5" v-show="key.screenshot_large" style="margin:auto;"></v-img>
+								</div>
+								</v-flex>
+								<v-flex xs12 md6 class="keys py-2">
+								<v-list dense style="padding:0px;max-width:350px;margin: auto;">
+									<v-list-item :href="key.link" target="_blank" dense>
+									<v-list-item-content>
+										<v-list-item-title>Link</v-list-item-title>
+										<v-list-item-subtitle v-text="key.link"></v-list-item-subtitle>
+									</v-list-item-content>
+									<v-list-item-icon>
+										<v-icon>mdi-open-in-new</v-icon>
+									</v-list-item-icon>
+									</v-list-item>
+									<v-list-item @click="copyText( key.address )" dense>
+									<v-list-item-content>
+										<v-list-item-title>Address</v-list-item-title>
+										<v-list-item-subtitle v-text="key.address"></v-list-item-subtitle>
+									</v-list-item-content>
+									<v-list-item-icon>
+										<v-icon>mdi-content-copy</v-icon>
+									</v-list-item-icon>
+									</v-list-item>
+									<v-list-item @click="copyText( key.username )" dense>
+									<v-list-item-content>
+										<v-list-item-title>Username</v-list-item-title>
+										<v-list-item-subtitle v-text="key.username"></v-list-item-subtitle>
+									</v-list-item-content>
+									<v-list-item-icon>
+										<v-icon>mdi-content-copy</v-icon>
+									</v-list-item-icon>
+									</v-list-item>
+									<v-list-item @click="copyText( key.password )" dense>
+									<v-list-item-content>
+										<v-list-item-title>Password</v-list-item-title>
+										<v-list-item-subtitle>##########</v-list-item-subtitle>
+									</v-list-item-content>
+									<v-list-item-icon>
+										<v-icon>mdi-content-copy</v-icon>
+									</v-list-item-icon>
+									</v-list-item>
+									<v-list-item @click="copyText( key.protocol )" dense>
+									<v-list-item-content>
+										<v-list-item-title>Protocol</v-list-item-title>
+										<v-list-item-subtitle v-text="key.protocol"></v-list-item-subtitle>
+									</v-list-item-content>
+									<v-list-item-icon>
+										<v-icon>mdi-content-copy</v-icon>
+									</v-list-item-icon>
+									</v-list-item>
+									<v-list-item @click="copyText( key.port )" dense>
+									<v-list-item-content>
+										<v-list-item-title>Port</v-list-item-title>
+										<v-list-item-subtitle v-text="key.port"></v-list-item-subtitle>
+									</v-list-item-content>
+									<v-list-item-icon>
+										<v-icon>mdi-content-copy</v-icon>
+									</v-list-item-icon>
+									</v-list-item>
 								<div v-if="key.database && key.ssh">
 									<div v-if="key.database">
-									<hr />
-									<div><span class="caption">Database</span> <a :href="key.database" target="_blank">{{ key.database }}</a></div>
-									<div><span class="caption">Database Username</span> {{ key.database_username }}</a></div>
-									<div><span class="caption">Database Password</span> <div class="pass-mask">##########</div><div class="pass-reveal">{{ key.database_password }}</div></div>
+										<v-list-item :href="key.database" target="_blank" dense>
+										<v-list-item-content>
+											<v-list-item-title>Database</v-list-item-title>
+											<v-list-item-subtitle v-text="key.database"></v-list-item-subtitle>
+										</v-list-item-content>
+										<v-list-item-icon>
+											<v-icon>mdi-open-in-new</v-icon>
+										</v-list-item-icon>
+										</v-list-item>
+										<v-list-item @click="copyText( key.database_username )" dense>
+										<v-list-item-content>
+											<v-list-item-title>Database Username</v-list-item-title>
+											<v-list-item-subtitle v-text="key.database_username"></v-list-item-subtitle>
+										</v-list-item-content>
+										<v-list-item-icon>
+											<v-icon>mdi-content-copy</v-icon>
+										</v-list-item-icon>
+										</v-list-item>
+										<v-list-item @click="copyText( key.database_password )" dense>
+										<v-list-item-content>
+											<v-list-item-title>Database Username</v-list-item-title>
+											<v-list-item-subtitle>##########</v-list-item-subtitle>
+										</v-list-item-content>
+										<v-list-item-icon>
+											<v-icon>mdi-content-copy</v-icon>
+										</v-list-item-icon>
+										</v-list-item>
 									</div>
-									<hr />
-									<div v-if="key.ssh">{{ key.ssh }}</div>
+									<div v-if="key.ssh">
+										<v-list-item @click="copyText( key.ssh )" dense>
+										<v-list-item-content>
+											<v-list-item-title>SSH Connection</v-list-item-title>
+											<v-list-item-subtitle v-text="key.ssh"></v-list-item-subtitle>
+										</v-list-item-content>
+										<v-list-item-icon>
+											<v-icon>mdi-content-copy</v-icon>
+										</v-list-item-icon>
+										</v-list-item>
+									</div>
 								</div>
-							</div>
-							<div>
-							<img :src="key.screenshot_large" style="width:400px;" class="elevation-3" v-show="key.screenshot_large">
-							</div>
+								</v-list>
+							</v-flex>
 						</v-layout>
 						</v-container>
 					</v-card>
@@ -2746,6 +2462,8 @@ Vue.component('file-upload', VueUploadComponent);
 						:headers="header_themes"
 						:items="key.themes"
 						:loading="site.loading_themes"
+						:items-per-page="-1"
+						:footer-props="{ itemsPerPageOptions: [{'text':'All','value':-1}] }"
 						item-key="name"
 						value="name"
 						show-select
@@ -2778,7 +2496,8 @@ Vue.component('file-upload', VueUploadComponent);
 						:headers="header_plugins"
 						:items="key.plugins.filter(plugin => plugin.status != 'must-use' && plugin.status != 'dropin')"
 						:loading="site.loading_plugins"
-						:items-per-page-options='[50,100,250,{"text":"All","value":-1}]'
+						:items-per-page="-1"
+						:footer-props="{ itemsPerPageOptions: [{'text':'All','value':-1}] }"
 						v-model="key.plugins_selected"
 						item-key="name"
 						value="name"
@@ -2831,7 +2550,8 @@ Vue.component('file-upload', VueUploadComponent);
 					<div v-if="typeof key.users != 'string'">
 						<v-data-table
 							:headers='header_users'
-							:items-per-page-options='[50,100,250,{"text":"All","value":-1}]'
+							:items-per-page="50"
+							:footer-props="{ itemsPerPageOptions: [50,100,250,{'text':'All','value':-1}] }"
 							:items="key.users"
 							item-key="user_login"
 							v-model="key.users_selected"
@@ -2842,8 +2562,8 @@ Vue.component('file-upload', VueUploadComponent);
 							{{ item.roles.split(",").join(" ") }}
 						</template>
 						<template v-slot:item.actions="{ item }">
-							<v-btn small rounded @click="loginSite(site.id, item.user_login)">Login as</v-btn>
-							<v-btn icon small class="mx-0" @click="deleteUserDialog( item.user_login, site.id)">
+							<v-btn small rounded @click="loginSite(site.id, item.user_login)" class="my-2">Login as</v-btn>
+							<v-btn icon small class="my-2" @click="deleteUserDialog( item.user_login, site.id)">
 								<v-icon small color="pink">delete</v-icon>
 							</v-btn>
 						</template>
@@ -2856,8 +2576,8 @@ Vue.component('file-upload', VueUploadComponent);
 					<v-toolbar-title>Update Logs</v-toolbar-title>
 					<v-spacer></v-spacer>
 					<v-toolbar-items>
-						<v-btn text @click="update(site.id)">Manual update <v-icon dark small>fas fa-sync-alt</v-icon></v-btn>
-						<v-btn text @click="updateSettings(site.id)">Update Settings <v-icon dark small>fas fa-cog</v-icon></v-btn>
+						<v-btn text @click="update(site.id)">Manual update <v-icon dark>mdi-sync</v-icon></v-btn>
+						<v-btn text @click="updateSettings(site.id)">Update Settings <v-icon dark>mdi-settings</v-icon></v-btn>
 						<!-- <v-btn text @click="themeAndPluginChecks(site.id)">Theme/plugin checks <v-icon dark small>fas fa-calendar-check</v-icon></v-btn> -->
 					</v-toolbar-items>
 				</v-toolbar>
@@ -2913,37 +2633,75 @@ Vue.component('file-upload', VueUploadComponent);
 						<v-btn small color="primary" dark @click="runCustomCode(site.id)">Run Custom Code</v-btn>
 					</v-flex>
 					<v-flex xs12 sm4>
+						<v-list dense>
 						<v-subheader>Common</v-subheader>
-							<div><v-btn small text @click="viewApplyHttpsUrls(site.id)">
-								<v-icon>launch</v-icon> <span>Apply HTTPS Urls</span>
-							</v-btn></div>
-							<div v-show="site.mailgun"><v-btn small text @click="viewMailgunLogs(site.id)" >
-								<v-icon>email</v-icon> <span>View Mailgun Logs</span>
-							</v-btn></div>
-							<div><v-btn small text @click="siteDeploy(site.id)">
-								<v-icon>loop</v-icon> <span>Deploy users/plugins</span>
-							</v-btn></div>
-							<div><v-btn small text @click="launchSiteDialog(site.id)">
-								<v-icon>fas fa-rocket</v-icon> <span>Launch Site</span>
-							</v-btn></div>
-							<div><v-btn small text @click="showSiteMigration(site.id)">
-								<v-icon>fas fa-truck-moving</v-icon><span>Migrate from backup</span>
-							</v-btn></div>
-							<div><v-btn small text @click="toggleSite(site.id)">
-								<v-icon>fas fa-toggle-on</v-icon><span>Toggle Site</span>
-							</v-btn></div>
+						<v-list-item @click="viewApplyHttpsUrls(site.id)" dense>
+						<v-list-item-icon>
+							<v-icon>launch</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>Apply HTTPS Urls</v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
+						<v-list-item @click="viewMailgunLogs(site.id)" dense v-if="site.mailgun">
+						<v-list-item-icon>
+							<v-icon>email</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>View Mailgun Logs</v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
+						<v-list-item @click="siteDeploy(site.id)" dense>
+						<v-list-item-icon>
+							<v-icon>loop</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>Deploy users/plugins</v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
+						<v-list-item @click="launchSiteDialog(site.id)" dense>
+						<v-list-item-icon>
+							<v-icon>mdi-rocket</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>Launch Site</v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
+						<v-list-item @click="showSiteMigration(site.id)" dense>
+						<v-list-item-icon>
+							<v-icon>mdi-truck</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>Migrate from backup</v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
+						<v-list-item @click="toggleSite(site.id)" dense>
+						<v-list-item-icon>
+							<v-icon>mdi-toggle-switch</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title>Toggle Site</v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
 						<v-subheader v-show="recipes.filter( r => r.public == 1 ).length > 0">Other</v-subheader>
-						<div v-for="recipe in recipes.filter( r => r.public == 1 )">
-							<v-btn small text @click="runRecipe( recipe.recipe_id, site.id )">
-								<v-icon>fas fa-scroll</v-icon> <span>{{ recipe.title }}</span>
-							</v-btn>
-						</div>
+						<v-list-item @click="runRecipe( recipe.recipe_id, site.id )" dense v-for="recipe in recipes.filter( r => r.public == 1 )">
+						<v-list-item-icon>
+							<v-icon>mdi-script-text-outline</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title v-text="recipe.title"></v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
 						<v-subheader v-show="recipes.filter( r => r.public != 1 ).length > 0">User</v-subheader>
-						<div v-for="recipe in recipes.filter( r => r.public != 1 )">
-							<v-btn small text @click="loadRecipe( recipe.recipe_id ); $vuetify.goTo( '#script_site' );">
-								<v-icon>fas fa-scroll</v-icon> <span>{{ recipe.title }}</span>
-							</v-btn>
-						</div>
+						<v-list-item @click="loadRecipe( recipe.recipe_id ); $vuetify.goTo( '#script_site' );" dense v-for="recipe in recipes.filter( r => r.public != 1 )">
+						<v-list-item-icon>
+							<v-icon>mdi-script-text-outline</v-icon>
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-list-item-title v-text="recipe.title"></v-list-item-title>
+						</v-list-item-content>
+						</v-list-item>
+						</v-list>
 					</v-flex>
 					</v-layout>
 					</v-card-title>
@@ -2951,150 +2709,214 @@ Vue.component('file-upload', VueUploadComponent);
 			</v-tab-item>
 			<v-tab-item :key="7" value="tab-Backups">
 				<v-toolbar color="grey lighten-4" dense light flat>
-					<v-toolbar-title>Quicksaves</v-toolbar-title>
+					<v-toolbar-title>Backups <small>(Quicksaves & Snapshots)</small></v-toolbar-title>
 					<v-spacer></v-spacer>
 					<v-toolbar-items>
-						<v-btn text @click="promptBackupSnapshot( site.id )">Download Backup Snapshot <v-icon dark small>fas fa-cloud-download-alt</v-icon></v-btn>
+						<v-tooltip top>
+							<template v-slot:activator="{ on }">
+								<v-btn text small @click="promptBackupSnapshot( site.id )" v-on="on"><v-icon dark>mdi-cloud-download</v-icon></v-btn>
+							</template><span>Generate and Download Snapshot</span>
+						</v-tooltip>
 						<v-divider vertical class="mx-1" inset></v-divider>
-						<v-btn text @click="QuicksaveCheck( site.id )">Manual Check <v-icon dark small>fas fa-sync-alt</v-icon></v-btn>
+						<v-tooltip top>
+							<template v-slot:activator="{ on }">
+							<v-btn text @click="QuicksaveCheck( site.id )" v-on="on"><v-icon dark>mdi-sync</v-icon></v-btn>
+							</template><span>Manual check for new Quicksave</span>
+						</v-tooltip>
+						
 					</v-toolbar-items>
 				</v-toolbar>
-						<v-card 
-						v-for="key in site.environments"
-						v-show="key.environment == site.environment_selected"
-						flat>
-							<div v-if="typeof key.quicksaves == 'string'">
-								<v-progress-linear :indeterminate="true" absolute></v-progress-linear>
-							</div>
-							<v-card-title v-else-if="key.quicksaves.length == 0">
-								<div>
-									No quicksaves found.
-								</div>
-							</v-card-title>
-							<div v-else>
-							<v-expansion-panels accordion v-model="key.quicksave_panel">
-							<v-expansion-panel v-for="quicksave in key.quicksaves" style="elevation-0">
-							  <v-expansion-panel-header style="min-height: 44px;padding: 12px 20px;">
-								<v-layout align-center justify-space-between row>
-									<v-flex class="font-weight-thin subtitle-1">
-										<v-icon>settings_backup_restore</v-icon> {{ quicksave.created_at | pretty_timestamp }}</span>
-									</v-flex>
-									<v-flex class="body-2 text-right pr-3">
-									<v-chip label>WordPress {{ quicksave.core }}</v-chip>  <v-chip label>{{ quicksave.plugins.length }} Plugins</v-chip> <v-chip label>{{ quicksave.themes.length }} Themes</v-chip>
-									</v-flex>
-								</v-layout>
-							</v-expansion-panel-header>
-							<v-expansion-panel-content>
-								<v-toolbar color="dark primary" dark dense light>
-									<v-toolbar-title class="body-2">{{ quicksave.git_status }}</v-toolbar-title>
+				<v-card 
+				v-for="key in site.environments"
+				v-show="key.environment == site.environment_selected"
+				flat>
+					<v-subheader>Quicksaves</v-subheader>
+					<div v-if="typeof key.quicksaves == 'string'">
+						<v-progress-linear :indeterminate="true" absolute></v-progress-linear>
+					</div>
+					<div v-else>
+					<v-data-table
+						:headers="[{text:'Created At',value:'created_at'},{text:'WordPress',value:'core',width:'115px'},{text:'',value:'themes',width:'100px'},{text:'',value:'plugins',width:'100px'}]"
+						:items="key.quicksaves"
+						item-key="quicksave_id"
+						no-data-text="No quicksaves found."
+						:ref="'quicksave_table_'+ site.id + '_' + key.environment"
+						@click:row="expandQuicksave( $event, site.id, key.environment )"
+						single-expand
+						show-expand
+						class="table-quicksaves"
+					>
+					<template v-slot:item.created_at="{ item }">
+						{{ item.created_at | pretty_timestamp }}
+					</template>
+					<template v-slot:item.core="{ item }">
+						{{ item.core }}
+					</template>
+					<template v-slot:item.themes="{ item }">
+						{{ item.themes.length }} themes
+					</template>
+					<template v-slot:item.plugins="{ item }">
+						{{ item.plugins.length }} plugins
+					</template>
+					<template v-slot:expanded-item="{ item }">
+						<td colspan="5" style="position: relative;background: #fff; padding:0px">
+						<v-toolbar color="dark primary" dark dense light class="elevation-0">
+							<v-toolbar-title class="body-2">{{ item.git_status }}</v-toolbar-title>
+							<v-spacer></v-spacer>
+							<v-toolbar-items>
+								<v-btn text small @click="QuicksavesRollback( site.id, item)">Rollback Everything</v-btn>
+								<v-divider vertical class="mx-1" inset></v-divider>
+								<v-btn text small @click="viewQuicksavesChanges( site.id, item)">View Changes</v-btn>
+							</v-toolbar-items>
+						</v-toolbar>
+						<v-card flat v-show="item.view_changes == true" style="table-layout:fixed;margin:0px;overflow: scroll;padding: 0px;position: absolute;background-color: #fff;width: 100%;left: 0;top: 100%;height: 100%;z-index: 3;transform: translateY(-100%);">
+							<v-toolbar color="dark primary" dark dense light>
+								<v-btn icon dark @click.native="item.view_changes = false">
+									<v-icon>close</v-icon>
+								</v-btn>
+								<v-toolbar-title>List of changes</v-toolbar-title>
+								<v-spacer></v-spacer>
+							</v-toolbar>
+								<v-card-text>
+									<v-card-title>
+										Files
+									</v-card-title>
 									<v-spacer></v-spacer>
-									<v-toolbar-items>
-										<v-btn text @click="QuicksavesRollback( site.id, quicksave)">Rollback Everything</v-btn>
-										<v-divider vertical class="mx-1" inset></v-divider>
-										<v-btn text @click="viewQuicksavesChanges( site.id, quicksave)">View Changes</v-btn>
-									</v-toolbar-items>
-								</v-toolbar>
-								<v-card text v-show="quicksave.view_changes == true" style="table-layout:fixed;margin:0px;overflow: scroll;padding: 0px;position: absolute;background-color: #fff;width: 100%;left: 0;top: 100%;height: 100%;z-index: 3;transform: translateY(-100%);">
-									<v-toolbar color="dark primary" dark dense light>
-										<v-btn icon dark @click.native="quicksave.view_changes = false">
-											<v-icon>close</v-icon>
-										</v-btn>
-										<v-toolbar-title>List of changes</v-toolbar-title>
-										<v-spacer></v-spacer>
-									</v-toolbar>
-										<v-card-text>
-											<v-card-title>
-												Files
-											</v-card-title>
-										  <v-spacer></v-spacer>
-										  <v-layout>
-											  <v-flex sx12 sm9>
-											  </v-flex sx12 sm3>
-											  <v-flex>
-												<v-text-field
-													v-model="quicksave.search"
-													@input="filterFiles( site.id, quicksave.quicksave_id)"
-													append-icon="search"
-													label="Search"
-													single-line
-													hide-details
-												></v-text-field>
-											  </v-flex>
-											</v-layout>
-											<v-data-table no-data-text="" :headers='[{"text":"File","value":"file"}]' :items="quicksave.filtered_files" :loading="quicksave.loading">
-												<template v-slot:body="{ items }">
-												<tbody>
-													<tr v-for="item in items" >
-														<td>
-															<a class="v-menu__activator" @click="QuicksaveFileDiff(quicksave.site_id, quicksave.quicksave_id, quicksave.git_commit, item)">{{ item }}</a>
-														</td>
-													</tr>
-												</tbody>
-											 </template>
-											 <v-alert slot="no-results" :value="true" color="error" icon="warning">
-													Your search for "{{ quicksave.search }}" found no results.
-												</v-alert>
-											</v-data-table>
-										</v-card-text>
-									</v-card>
-							    <v-card>
-											<v-data-table
-												:headers='[{"text":"Theme","value":"title"},{"text":"Version","value":"version"},{"text":"Status","value":"status"},{"text":"","value":"actions","width":"150px"}]'
-												:items="quicksave.themes"
-												item-key="name"
-												class="quicksave-table"
-											>
-											<template v-slot:body="{ items }">
-											<tbody>
-											<tr v-for="item in items" v-bind:class="{ 'green lighten-5': item.changed_version || item.changed_status }">
-												<td>{{ item.title }}</td>
-												<td v-bind:class="{ 'green lighten-4': item.changed_version }">{{ item.version }}</td>
-												<td v-bind:class="{ 'green lighten-4': item.changed_status }">{{ item.status }}</td>
-												<td><v-btn text small @click="RollbackQuicksave(quicksave.site_id, quicksave.quicksave_id, 'theme', item.name)">Rollback</v-btn></td>
+									<v-layout>
+										<v-flex sx12 sm9>
+										</v-flex sx12 sm3>
+										<v-flex>
+										<v-text-field
+											v-model="item.search"
+											@input="filterFiles( site.id, item.quicksave_id)"
+											append-icon="search"
+											label="Search"
+											single-line
+											hide-details
+										></v-text-field>
+										</v-flex>
+									</v-layout>
+									<v-data-table no-data-text="" :headers='[{"text":"File","value":"file"}]' :items="item.filtered_files" :loading="item.loading">
+										<template v-slot:body="{ items }">
+										<tbody>
+											<tr v-for="i in items">
+												<td>
+													<a class="v-menu__activator" @click="QuicksaveFileDiff(item.site_id, item.quicksave_id, item.git_commit, i)">{{ i }}</a>
+												</td>
 											</tr>
-											</template>
-											 <template v-slot:body.append="{ headers }">
-											 <tr class="red lighten-4 strikethrough" v-for="theme in quicksave.deleted_themes">
-												<td>{{ theme.title || theme.name }}</td>
-												<td>{{ theme.version }}</td>
-												<td>{{ theme.status }}</td>
-												<td></td>
-											 </tr>
-											 </tbody>
-											 </template>
-											</v-data-table>
-											<v-data-table
-												:headers='[{"text":"Plugin","value":"plugin"},{"text":"Version","value":"version"},{"text":"Status","value":"status"},{"text":"","value":"actions","width":"150px"}]'
-												:items="quicksave.plugins"
-												item-key="name"
-												class="quicksave-table"
-												:items-per-page="25"
-												:footer-props="{ itemsPerPageOptions: [25,50,100,{'text':'All','value':-1}] }"
-											 >
-											 <template v-slot:body="{ items }">
-											 <tbody>
-											 <tr v-for="item in items" v-bind:class="[{ 'green lighten-5': item.changed_version || item.changed_status },{ 'red lighten-4 strikethrough': item.deleted }]">
-												<td>{{ item.title || item.name }}</td>
-												<td v-bind:class="{ 'green lighten-4': item.changed_version }">{{ item.version }}</td>
-												<td v-bind:class="{ 'green lighten-4': item.changed_status }">{{ item.status }}</td>
-												<td><v-btn text small @click="RollbackQuicksave(quicksave.site_id, quicksave.quicksave_id, 'plugin', item.name)" v-show="item.status != 'must-use' || item.status != 'dropin'">Rollback</v-btn></td>
-											 </tr>
-											 </template>
-											 <template v-slot:body.append="{ headers }">
-											 <tr class="red lighten-4 strikethrough" v-for="plugin in quicksave.deleted_plugins">
-												<td>{{ plugin.title || plugin.name }}</td>
-												<td>{{ plugin.version }}</td>
-												<td>{{ plugin.status }}</td>
-												<td></td>
-											 </tr>
-											 </tbody>
-											 </template>
-											</v-data-table>
-							    </v-card>
-							  </v-expansion-panel-content>
-							</v-expansion-panel>
-							</v-expansion-panels>
-							</div>
+										</tbody>
+										</template>
+										<v-alert slot="no-results" :value="true" color="error" icon="warning">
+											Your search for "{{ item.search }}" found no results.
+										</v-alert>
+									</v-data-table>
+								</v-card-text>
+							</v-card>
+						<v-card flat>
+							<v-data-table
+								:headers='[{"text":"Theme","value":"title"},{"text":"Version","value":"version"},{"text":"Status","value":"status"},{"text":"","value":"actions","width":"150px"}]'
+								:items="item.themes"
+								item-key="name"
+								class="quicksave-table"
+							>
+							<template v-slot:body="{ items }">
+							<tbody>
+							<tr v-for="theme in items" v-bind:class="{ 'green lighten-5': theme.changed_version || theme.changed_status }">
+								<td>{{ theme.title || theme.name }}</td>
+								<td v-bind:class="{ 'green lighten-4': theme.changed_version }">{{ theme.version }}</td>
+								<td v-bind:class="{ 'green lighten-4': theme.changed_status }">{{ theme.status }}</td>
+								<td><v-btn depressed small @click="RollbackQuicksave(item.site_id, item.quicksave_id, 'theme', theme.name)">Rollback</v-btn></td>
+							</tr>
+							</template>
+								<template v-slot:body.append="{ headers }">
+								<tr class="red lighten-4 strikethrough" v-for="theme in quicksave.deleted_themes">
+								<td>{{ theme.title || theme.name }}</td>
+								<td>{{ theme.version }}</td>
+								<td>{{ theme.status }}</td>
+								<td></td>
+								</tr>
+								</tbody>
+								</template>
+							</v-data-table>
+							<v-data-table
+								:headers='[{"text":"Plugin","value":"plugin"},{"text":"Version","value":"version"},{"text":"Status","value":"status"},{"text":"","value":"actions","width":"150px"}]'
+								:items="item.plugins"
+								item-key="name"
+								class="quicksave-table"
+								:items-per-page="25"
+								:footer-props="{ itemsPerPageOptions: [25,50,100,{'text':'All','value':-1}] }"
+								>
+								<template v-slot:body="{ items }">
+								<tbody>
+								<tr v-for="plugin in items" v-bind:class="[{ 'green lighten-5': plugin.changed_version || plugin.changed_status },{ 'red lighten-4 strikethrough': plugin.deleted }]">
+								<td>{{ plugin.title || plugin.name }}</td>
+								<td v-bind:class="{ 'green lighten-4': plugin.changed_version }">{{ plugin.version }}</td>
+								<td v-bind:class="{ 'green lighten-4': plugin.changed_status }">{{ plugin.status }}</td>
+								<td><v-btn depressed small @click="RollbackQuicksave(item.site_id, item.quicksave_id, 'plugin', plugin.name)" v-show="plugin.status != 'must-use' && plugin.status != 'dropin'">Rollback</v-btn></td>
+								</tr>
+								</template>
+								<template v-slot:body.append="{ headers }">
+								<tr class="red lighten-4 strikethrough" v-for="plugin in quicksave.deleted_plugins">
+								<td>{{ plugin.title || plugin.name }}</td>
+								<td>{{ plugin.version }}</td>
+								<td>{{ plugin.status }}</td>
+								<td></td>
+								</tr>
+								</tbody>
+								</template>
+							</v-data-table>
+
+						</v-card>
+						</td>
+					</template>
+					</v-data-table>
+					</div>
+					<v-subheader>Snapshots</v-subheader>
+					<div v-if="typeof key.snapshots == 'string'">
+						<v-progress-linear :indeterminate="true" absolute></v-progress-linear>
+					</div>
+					<div v-else>
+					<v-data-table
+						:headers="[{text:'Created At',value:'created_at',width:'250px'},{text:'User',value:'user',width:'125px'},{text:'Storage',value:'storage',width:'100px'},{text:'Notes',value:'notes'},{text:'',value:'actions',sortable: false,width:'190px'}]"
+						:items="key.snapshots"
+						item-key="snapshot_id"
+						no-data-text="No snapshots found."
+					>
+					<template v-slot:item.user="{ item }">
+						{{ item.user.name }}
+					</template>
+					<template v-slot:item.created_at="{ item }">
+						{{ item.created_at | pretty_timestamp }}
+					</template>
+					<template v-slot:item.storage="{ item }">
+						{{ item.storage | formatSize }}
+					</template>
+					<template v-slot:item.actions="{ item }">
+					<template v-if="item.token && new Date() < new Date( item.expires_at )">
+						<v-tooltip bottom>
+							<template v-slot:activator="{ on }">
+							<v-btn small icon @click="fetchLink( site.id, item.snapshot_id )" v-on="on">
+								<v-icon color="grey">mdi-sync</v-icon>
+							</v-btn>
+							</template>
+							<span>Generate new link. Link valid for 24hrs.</span>
+						</v-tooltip>
+						<v-btn small rounded :href="`/wp-json/captaincore/v1/site/${site.id}/snapshots/${item.snapshot_id}-${item.token}/${item.snapshot_name.slice(0, -4)}`">Download</v-btn>
+					</template>
+					<template v-else>
+						<v-tooltip bottom>
+							<template v-slot:activator="{ on }">
+							<v-btn small icon @click="fetchLink( site.id, item.snapshot_id )" v-on="on">
+								<v-icon color="grey">mdi-sync</v-icon>
+							</v-btn>
+							</template>
+							<span>Generate new link. Link valid for 24hrs.</span>
+						</v-tooltip>
+						<v-btn small rounded disabled>Download</v-btn>
+					</template>
+					</template>
+					</v-data-table>
+					</div>
 					</v-card>
 			</v-tab-item>
 		</v-tabs-items>
@@ -3188,7 +3010,7 @@ Vue.component('file-upload', VueUploadComponent);
 				<v-subheader>Customer</v-subheader>
 				<v-list-item :key="site.customer.customer_id">
 					<v-list-item-icon>
-						<v-icon>fas fa-user</v-icon>
+						<v-icon>mdi-account</v-icon>
 					</v-list-item-icon>
 					<v-list-item-content>
 						<v-list-item-title>{{ site.customer.name }}</v-list-item-title>
@@ -3198,7 +3020,7 @@ Vue.component('file-upload', VueUploadComponent);
 				<v-subheader>Shared With</v-subheader>
 				<v-list-item v-for="customer in site.shared_with" :key="customer.customer_id">
 					<v-list-item-icon>
-						<v-icon>fas fa-user</v-icon>
+						<v-icon>mdi-account</v-icon>
 					</v-list-item-icon>
 					<v-list-item-content>
 						<v-list-item-title>{{ customer.name }}</v-list-item-title>
@@ -3212,7 +3034,7 @@ Vue.component('file-upload', VueUploadComponent);
 				<v-toolbar-title>Timeline</v-toolbar-title>
 				<v-spacer></v-spacer>
 				<v-toolbar-items v-show="role == 'administrator'">
-					<v-btn text @click="showLogEntry(site.id)">New Log Entry <v-icon dark small>fas fa-check-circle</v-icon></v-btn>
+					<v-btn text @click="showLogEntry(site.id)">New Log Entry <v-icon dark>mdi-checkbox-marked</v-icon></v-btn>
 				</v-toolbar-items>
 			</v-toolbar>
 			<v-card flat>
@@ -3275,31 +3097,13 @@ Vue.component('file-upload', VueUploadComponent);
 			</v-expansion-panels>
 				<v-layout justify-center>
 				<div class="text-center">
-					<v-pagination v-if="Math.ceil(filteredSites / items_per_page) > 1" :length="Math.ceil(filteredSites / items_per_page)" v-model="page" :total-visible="7" color="blue darken-3"></v-pagination>
+					<v-pagination v-if="Math.ceil(filteredSites / items_per_page) > 1" :length="Math.ceil(filteredSites / items_per_page)" v-model="page" :total-visible="7" color="blue darken-3" class="mt-5"></v-pagination>
 				</div>
 				</v-layout>
 			</v-card-text>
 			</v-card>
-			<v-card class="mb-4 dns_introduction" v-show="route == 'dns'">
-			<v-alert
-				:value="true"
-				type="info"
-				style="padding:8px 16px;"
-				class="blue darken-3"
-				>
-				<v-layout wrap align-center justify-center row fill-height>
-				<v-flex xs12 md9 px-2 subtitle-1>
-					<div v-html="dns_introduction"></div>
-				</v-flex>
-				<v-flex xs12 md3 px-2 text-center v-show="dns_nameservers != ''">
-					<v-chip color="primary" text-color="white">Nameservers</v-chip>
-					<div v-html="dns_nameservers"></div>
-				</v-flex>
-				</v-layout>
-				</v-alert>
-			</v-card>
-			<v-card tile v-show="route == 'dns'">
-				<v-toolbar color="grey lighten-4" dense light flat>
+			<v-card tile v-show="route == 'dns'" flat>
+				<v-toolbar color="grey lighten-4" light flat>
 					<v-toolbar-title>Domains <small v-show="allDomains > 0">({{ allDomains }})</small></v-toolbar-title>
 					<v-spacer></v-spacer>
 					<v-toolbar-items>
@@ -3307,6 +3111,24 @@ Vue.component('file-upload', VueUploadComponent);
 					</v-toolbar-items>
 				</v-toolbar>
 				<v-card-text>
+				<v-card class="mb-4 dns_introduction" v-show="route == 'dns'">
+					<v-alert
+						:value="true"
+						type="info"
+						style="padding:8px 16px;"
+						class="blue darken-3"
+					>
+					<v-layout wrap align-center justify-center row fill-height>
+					<v-flex xs12 md9 px-2 subtitle-1>
+						<div v-html="dns_introduction"></div>
+					</v-flex>
+					<v-flex xs12 md3 px-2 text-center v-show="dns_nameservers != ''">
+						<v-chip color="primary" text-color="white">Nameservers</v-chip>
+						<div v-html="dns_nameservers"></div>
+					</v-flex>
+					</v-layout>
+					</v-alert>
+				</v-card>
 				<v-layout justify-center>
 				<v-container fluid grid-list-lg>
 				<v-layout row wrap>
@@ -3327,12 +3149,12 @@ Vue.component('file-upload', VueUploadComponent);
 				</v-layout>
 				</v-card-text>
 			</v-card>
-			<v-card tile v-show="route == 'cookbook'" v-if="role == 'administrator'">
-				<v-toolbar color="grey lighten-4" dense light flat>
+			<v-card tile v-show="route == 'cookbook'" v-if="role == 'administrator'" flat>
+				<v-toolbar color="grey lighten-4" light flat>
 					<v-toolbar-title>Contains {{ recipes.length }} recipes</v-toolbar-title>
 					<v-spacer></v-spacer>
 					<v-toolbar-items>
-						<v-btn text @click="new_recipe.show = true">Add new recipe</v-btn>
+						<v-btn text @click="new_recipe.show = true">Add recipe <v-icon dark>add</v-icon></v-btn>
 					</v-toolbar-items>
 				</v-toolbar>
 				<v-card-text>
@@ -3354,16 +3176,16 @@ Vue.component('file-upload', VueUploadComponent);
 				</v-window-item>
 				</v-card-text>
 			</v-card>
-			<v-card tile v-show="route == 'handbook'" v-if="role == 'administrator'">
-				<v-toolbar color="grey lighten-4" dense light flat>
+			<v-card tile v-show="route == 'handbook'" v-if="role == 'administrator'" flat>
+				<v-toolbar color="grey lighten-4" light flat>
 					<v-toolbar-title>Contains {{ processes.length }} processes</v-toolbar-title>
 					<v-spacer></v-spacer>
 					<v-toolbar-items>
 						<v-btn text @click="fetchProcessLogs()">Log history</v-btn>
 						<v-divider vertical class="mx-1" inset></v-divider>
-						<v-btn text @click="showLogEntryGeneric()">New log entry</v-btn>
+						<v-btn text @click="showLogEntryGeneric()">Add log entry <v-icon dark>add</v-icon></v-btn>
 						<v-divider vertical class="mx-1" inset></v-divider>
-						<v-btn text @click="new_process.show = true">New process</v-btn>
+						<v-btn text @click="new_process.show = true">Add process <v-icon dark>add</v-icon></v-btn>
 					</v-toolbar-items>
 				</v-toolbar>
 				<v-card-text style="max-height: 100%;">
@@ -3375,9 +3197,9 @@ Vue.component('file-upload', VueUploadComponent);
 							<div>
 								<span class="title">{{ process.title }}</a> <v-chip color="primary" text-color="white" text>{{ process.role }}</v-chip></span>
 								<div class="caption">
-									<v-icon small v-show="process.time_estimate != ''" style="padding:0px 5px">far fa-clock</v-icon>{{ process.time_estimate }} 
-									<v-icon small v-show="process.repeat != '' && process.repeat != null" style="padding:0px 5px">fas fa-redo-alt</v-icon>{{ process.repeat }} 
-									<v-icon small v-show="process.repeat_quantity != '' && process.repeat_quantity != null" style="padding:0px 5px">fas fa-retweet</v-icon>{{ process.repeat_quantity }}
+									<v-icon v-show="process.time_estimate != ''" style="padding:0px 5px">mdi-clock-outline</v-icon>{{ process.time_estimate }} 
+									<v-icon v-show="process.repeat != '' && process.repeat != null" style="padding:0px 5px">mdi-calendar-repeat</v-icon>{{ process.repeat }} 
+									<v-icon v-show="process.repeat_quantity != '' && process.repeat_quantity != null" style="padding:0px 5px">mdi-repeat</v-icon>{{ process.repeat_quantity }}
 								</div>
 							</div>
 						</v-card-title>
@@ -3401,7 +3223,13 @@ Vue.component('file-upload', VueUploadComponent);
 				<v-btn dark text @click.native="snackbar.show = false">Close</v-btn>
 			</v-snackbar>
 		</template>
+		</v-container>
 		</v-content>
+		<v-footer style="z-index: 9;position: relative;font-size:12px;">
+			<v-col class="text-right" cols="12">
+				<a href="https://github.com/CaptainCore/captaincore" target="_blank">CaptainCore v{{ captaincore_version }}</a>
+			</v-col>
+		</v-footer>
 	</v-app>
 </div>
 <script>
@@ -3409,23 +3237,6 @@ Vue.component('file-upload', VueUploadComponent);
 function titleCase(string) {
 	return string.charAt(0).toUpperCase() + string.slice(1);
 }
-
-function tryParseJSON (jsonString){
-try {
-	var o = JSON.parse(jsonString);
-
-	// Handle non-exception-throwing cases:
-	// Neither JSON.parse(false) or JSON.parse(1234) throw errors, hence the type-checking,
-	// but... JSON.parse(null) returns null, and typeof null === "object",
-	// so we must check for that, too. Thankfully, null is falsey, so this suffices:
-	if (o && typeof o === "object") {
-		return o;
-	}
-}
-catch (e) { }
-
-return false;
-};
 
 const monthNames = ["January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
@@ -3439,11 +3250,23 @@ function groupmonth(value, index, array) {
     bymonth[key]={Name: name, Visitors: bymonth[key].Visitors + value['Visitors'], Pageviews: bymonth[key].Pageviews + value['Pageviews']}
 }
 
+// Redirect to login page if not logged in.
+if ( typeof wpApiSettings == "undefined" ) {
+	window.location = "/my-account/"
+}
+
 new Vue({
 	el: '#app',
 	vuetify: new Vuetify(),
 	data: {
+		captaincore_version: "0.6",
+		captaincore_logo: "<?php echo get_field( 'business_logo', 'option' ); ?>",
+		captaincore_name: "<?php echo get_field( 'business_name', 'option' ); ?>",
+		drawer: null,
+		billing_link: "<?php echo get_field( 'billing_link', 'option' ); ?>",
 		loading_page: true,
+		expanded: [],
+		modules: { dns: <?php if ( defined( "CONSTELLIX_API_KEY" ) and defined( "CONSTELLIX_SECRET_KEY" ) ) { echo "true"; } else { echo "false"; } ?> },
 		dialog_bulk: { show: false, tabs_management: "tab-Sites", environment_selected: "Production" },
 		dialog_delete_user: { show: false, site: {}, users: [], username: "", reassign: {} },
 		dialog_apply_https_urls: { show: false, site_id: "", site_name: "", sites: [] },
@@ -3468,7 +3291,6 @@ new Vue({
 		page: 1,
 		socket: "<?php echo captaincore_fetch_socket_address() . "/ws"; ?>",
 		timezones: <?php echo json_encode( timezone_identifiers_list() ); ?>,
-		default_plugins: <?php $plugins = array(); $items = get_field_object('field_5879880d78844')['choices']; foreach( $items as $slug => $name ) { $plugins[] = array( "name" => $name, "slug" => $slug ); } echo json_encode( $plugins ) ?>,
 		jobs: [],
 		custom_script: "",
 		recipes: 
@@ -3491,7 +3313,7 @@ new Vue({
 			// The Query
 			$all_processes = get_posts( $args );
 			$repeat_field  = get_field_object( 'field_57f791d6363f4' );
-				   $processes     = array();
+			$processes     = array();
 
 			foreach ( $all_processes as $process ) {
 
@@ -3649,6 +3471,7 @@ new Vue({
 			{ text: 'Actions', value: 'actions', sortable: false }
 		],
 		applied_site_filter: [],
+		applied_site_filter_logic: [],
 		applied_site_filter_version: [],
 		applied_site_filter_status: [],
 		select_site_options: [
@@ -3686,8 +3509,8 @@ new Vue({
 		applied_site_filter (val) {
 			setTimeout( () => this.$refs.applied_site_filter.isMenuActive = false, 50)
 		},
-		selected_default_plugins (val) {
-			setTimeout( () => this.$refs.default_plugins.isMenuActive = false, 50)
+		selected_default_recipes (val) {
+			setTimeout( () => this.$refs.default_recipes.isMenuActive = false, 50)
 		},
 		route() {
 			this.triggerRoute()
@@ -3777,11 +3600,11 @@ new Vue({
 			const end = start + this.items_per_page;
 			return this.sites.filter( site => site.filtered ).slice(start, end);
 		},
-		selected_default_plugins() {
-			if ( typeof this.dialog_configure_defaults.record.default_plugins == 'undefined' ) {
+		selected_default_recipes() {
+			if ( typeof this.dialog_configure_defaults.record.default_recipes == 'undefined' ) {
 				return "";
 			} else {
-				return this.dialog_configure_defaults.record.default_plugins;
+				return this.dialog_configure_defaults.record.default_recipes;
 			}
 		},
 		runningJobs() {
@@ -3860,6 +3683,24 @@ new Vue({
 				}
 				this.route = "sites";
 			}
+		},
+		signOut() {
+        	axios.post( '/wp-json/captaincore/v1/login/', {
+                command: "signOut" 
+            })
+            .then( response => {
+                window.location = "/";
+			})
+		},
+		copyText( value ) {
+			var clipboard = document.getElementById("clipboard");
+			var x = document.createElement("input");
+			x.setAttribute("type", "text");
+			x.setAttribute("value", value );
+			clipboard.innerHTML = x.outerHTML;
+			clipboard.children[0].focus()
+			clipboard.children[0].select()
+			document.execCommand("copy");
 		},
 		triggerEnvironmentUpdate( site_id ){
 			site = this.sites.filter(site => site.id == site_id)[0];
@@ -4116,13 +3957,14 @@ new Vue({
 						}
 
 						self = this;
-
-						jQuery.post(ajaxurl, data, function(response) {
-							// Updates job id with reponsed background job id
-							self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-							self.runCommand( response );
-						});
-
+						axios.post( ajaxurl, Qs.stringify( data ) )
+							.then( response => {
+								self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+								self.runCommand( response.data );
+							})
+							.catch(error => {
+								console.log( error.response )
+							});
 					}
 
 				}
@@ -4196,10 +4038,10 @@ new Vue({
 			self = this;
 			site_name = this.dialog_new_site.domain;
 
-			jQuery.post(ajaxurl, data, function(response) {
-
-				if (tryParseJSON(response)) {
-					var response = JSON.parse(response);
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					// Read JSON response
+					var response = response.data;
 
 					// If error then response
 					if ( response.errors.length > 0 ) {
@@ -4235,16 +4077,13 @@ new Vue({
 							'command': "update",
 							'post_id': response.site_id
 						};
-
-						jQuery.post(ajaxurl, data, function(response) {
-							// Updates job id with background job id
-							self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-							self.runCommand( response );
-						});
-
+						axios.post( ajaxurl, Qs.stringify( data ) )
+							.then( r => {
+								self.jobs.filter(job => job.job_id == job_id)[0].job_id = r.data;
+								self.runCommand( r.data );
+							});
 					}
-				}
-			});
+				});
 		},
 		submitEditSite() {
 
@@ -4258,10 +4097,10 @@ new Vue({
 
 			self = this;
 
-			jQuery.post(ajaxurl, data, function(response) {
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
 
-				if (tryParseJSON(response)) {
-					var response = JSON.parse(response);
+					var response = response.data
 
 					// If error then response
 					if ( response.response.includes("Error:") ) {
@@ -4287,16 +4126,14 @@ new Vue({
 							'command': "update",
 							'post_id': response.site_id
 						};
-						jQuery.post(ajaxurl, data, function(response) {
-							// Updates job id with background job id
-							self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-							self.runCommand( response );
-							self.dialog_edit_site = { show: false, loading: false, site: {} };
-						});
-
+						axios.post( ajaxurl, Qs.stringify( data ) )
+							.then( r => {
+								self.jobs.filter(job => job.job_id == job_id)[0].job_id = r.data;
+								self.runCommand( r.data );
+								self.dialog_edit_site = { show: false, loading: false, site: {} };
+							});
 					}
-				}
-			});
+				});
 		},
 		syncSite( site_id, environment ) {
 
@@ -4376,37 +4213,31 @@ new Vue({
 
 			self = this;
 
-			jQuery.post(ajaxurl, data, function(response) {
-
-				// Bail if JSON not found
-				if ( !tryParseJSON( response ) ) {
-					return;
-				}
-
-				var sites = JSON.parse( response );
-				sites.forEach( site => {
-					lookup = self.sites.filter(s => s.id == site.id).length;
-					if (lookup == 1 ) {
-						// Update existing site info
-						site_update = self.sites.filter(s => s.id == site.id)[0];
-						// Look through keys and update
-						Object.keys(site).forEach(function(key) {
-							// Skip updating environment_selected and tabs_management
-							if ( key == "environment_selected" || key == "tabs" || key == "tabs_management" ) {
-								return;
-							}
-						  site_update[key] = site[key];
-						});
-					}
-					if (lookup != 1 ) { 
-						// Add new site info
-						self.sites.push(site);
-					}
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					response.data.forEach( site => {
+						lookup = self.sites.filter(s => s.id == site.id).length;
+						if (lookup == 1 ) {
+							// Update existing site info
+							site_update = self.sites.filter(s => s.id == site.id)[0];
+							// Look through keys and update
+							Object.keys(site).forEach(function(key) {
+								// Skip updating environment_selected and tabs_management
+								if ( key == "environment_selected" || key == "tabs" || key == "tabs_management" ) {
+									return;
+								}
+							site_update[key] = site[key];
+							});
+						}
+						if (lookup != 1 ) { 
+							// Add new site info
+							self.sites.push(site);
+						}
+					});
 				});
-			});
 		},
 		fetchMissing() {
-			if ( this.allDomains == 0 ) {
+			if ( this.allDomains == 0 && this.modules.dns ) {
 				this.fetchDomains()
 			}
 			if ( this.filteredSites == 0 ) {
@@ -4430,7 +4261,32 @@ new Vue({
 					headers: {'X-WP-Nonce':wpApiSettings.nonce}
 				})
 				.then(response => {
-					this.sites = response.data;
+
+					// Populate existing sites
+					if ( this.sites.length > 0 ) {
+						preserve_keys = ['environment_selected','filtered','selected','tabs','tabs_management']
+						response.data.forEach( r => {
+							site_check = this.sites.filter( s => s.id == r.id);
+							// Update site
+							if ( site_check.length == 1 ) {
+								site = site_check[0];
+								Object.keys( site_check[0] ).forEach( k => { 
+									if ( ! preserve_keys.includes( k ) ) { 
+										site[k] = r[k];
+									}
+								})
+							}
+							// Add site
+							if ( site_check.length == 0 ) {
+								this.sites.push( r )
+							}
+						})
+					}
+					
+					// Populate sites
+					if ( this.sites.length == 0 ) {
+						this.sites = response.data;
+					}
 
 					all_themes = [];
 					all_plugins = [];
@@ -4438,9 +4294,9 @@ new Vue({
 					this.sites.forEach(site => {
 						site.environments.forEach(environment => {
 							environment.themes.forEach(theme => {
-						exists = all_themes.some(function (el) {
-							return el.name === theme.name;
-						});
+							exists = all_themes.some(function (el) {
+								return el.name === theme.name;
+							});
 						if (!exists) {
 							all_themes.push({
 								name: theme.name,
@@ -4464,7 +4320,7 @@ new Vue({
 							});
 						}
 					});
-					 });
+					});
 					});
 
 					all_themes.sort((a, b) => a.name.toString().localeCompare(b.name));
@@ -4566,21 +4422,19 @@ new Vue({
 
 				self = this;
 
-				jQuery.post(ajaxurl, data, function(response) {
+				axios.post( ajaxurl, Qs.stringify( data ) )
+					.then( response => {
 
-					if (tryParseJSON(response)) {
-						response = JSON.parse(response)
+						response = response.data
 
 						// Loop through environments and assign users
 						Object.keys(response).forEach( key => {
 							site.environments.filter( e => e.environment == key )[0].users = response[key];
 							if ( response[key] == null ) {
 								site.environments.filter( e => e.environment == key )[0].users = [];
-					}
+							}
 						});
-					}
-
-				});
+					});
 			}
 		},
 		fetchUpdateLogs( site_id ) {
@@ -4597,21 +4451,17 @@ new Vue({
 					'command': "fetch-update-logs",
 				};
 
-				jQuery.post(ajaxurl, data, function(response) {
-
-					if (tryParseJSON(response)) {
-						response = JSON.parse(response)
-
+				axios.post( ajaxurl, Qs.stringify( data ) )
+					.then( response => {
+						response = response.data
 						// Loop through environments and assign users
 						Object.keys(response).forEach( key => {
 							site.environments.filter( e => e.environment == key )[0].update_logs = response[key];
 							if ( response[key] == null ) {
 								site.environments.filter( e => e.environment == key )[0].update_logs = [];
-					}
+							}
 						});
-					}
-
-				});
+					});
 			}
 		},
 		paginationUpdate( page ) {
@@ -4697,12 +4547,31 @@ new Vue({
 
 			self = this;
 
-			jQuery.post(ajaxurl, data, function(response) {
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-				self.runCommand( response );
-			});
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+					self.runCommand( response.data );
+				});
 
+		},
+		fetchLink( site_id, snapshot_id ) {
+			site = this.sites.filter(site => site.id == site_id )[0];
+			snapshot = site.environments.filter( e => e.environment == site.environment_selected )[0].snapshots.filter( s => s.snapshot_id == snapshot_id )[0];
+
+			var data = {
+				'action': 'captaincore_ajax',
+				'post_id': site_id,
+				'command': 'fetchLink',
+				'environment': site.environment_selected,
+				'value': snapshot_id
+			};
+
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					snapshot.token = response.data.token;
+					snapshot.expires_at = response.data.expires_at;
+				})
+				.catch( error => console.log( error ) );
 		},
 		promptBackupSnapshot( site_id ) {
 			site = this.sites.filter(site => site.id == site_id )[0];
@@ -4725,13 +4594,16 @@ new Vue({
 				'post_id': post_id,
 				'command': 'snapshot',
 				'environment': environment,
-				'value': this.dialog_backup_snapshot.email
+				'value': this.dialog_backup_snapshot.email,
+				'notes': "User requested full snapshot"
 			};
 
 			if ( this.dialog_backup_snapshot.filter_toggle === false ) {
 				data.filters = this.dialog_backup_snapshot.filter_options
+				description = this.dialog_backup_snapshot.filter_options.join(", ").replace(/,([^,]*)$/,' and$1');
+				data.notes = "User requested snapshot containing " + description;
 			}
-
+			
 			self = this;
 
 			axios.post( ajaxurl, Qs.stringify( data ) )
@@ -4874,17 +4746,17 @@ new Vue({
 			self = this;
 
 			// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
-			jQuery.post(ajaxurl, data, function(response) {
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-				self.runCommand( response );
-				self.dialog_apply_https_urls.site_id = "";
-				self.dialog_apply_https_urls.site_name = "";
-				self.dialog_apply_https_urls.show = false;
-				self.snackbar.message = "Applying HTTPS Urls";
-				self.snackbar.show = true;
-			});
-
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					// Updates job id with reponsed background job id
+					self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+					self.runCommand( response.data );
+					self.dialog_apply_https_urls.site_id = "";
+					self.dialog_apply_https_urls.site_name = "";
+					self.dialog_apply_https_urls.show = false;
+					self.snackbar.message = "Applying HTTPS Urls";
+					self.snackbar.show = true;
+				});
 		},
 		fetchTimelineLogs() {
 			this.view_timeline = !this.view_timeline;
@@ -5617,6 +5489,28 @@ new Vue({
 		addDefaultsUser() {
 			this.dialog_configure_defaults.record.default_users.push({ email: "", first_name: "", last_name: "", role: "administrator", username: "" })
 		},
+		addDomain() {
+			this.dialog_new_domain.loading = true;
+
+			var data = {
+				action: 'captaincore_ajax',
+				command: 'addDomain',
+				value: this.dialog_new_domain.domain
+			};
+
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					this.dialog_new_domain.loading = false;
+					this.dialog_new_domain = { show: false, domain: { name: "", customer: "" } };
+					this.snackbar.message = response.data;
+					this.snackbar.show = true;
+				})
+				.catch( error => {
+					this.snackbar.message = error;
+					this.snackbar.show = true;
+					this.dialog_new_domain.loading = false;
+				});
+		},
 		addRecord() {
 			timestamp = new Date().getTime();
 			this.dialog_domain.records.push({ id: "new_" + timestamp, edit: false, delete: false, new: true, ttl: "1800", type: "A", value: [{"value": ""}], update: {"record_id": "new_" + timestamp, "record_type": "A", "record_name": "", "record_value": [{"value": ""}], "record_ttl": "1800", "record_status": "new-record" } });
@@ -5657,6 +5551,9 @@ new Vue({
 			if ( record.type == "CNAME" || record.type == "HTTPRedirection" ) {
 				record.update.record_value = "";
 			}
+		},
+		deleteUserValue( delete_index ) {
+			this.dialog_configure_defaults.record.default_users = this.dialog_configure_defaults.record.default_users.filter( (u, index) => index != delete_index );
 		},
 		deleteRecordValue( index, value_index ) {
 			this.dialog_domain.records[index].update.record_value.splice( value_index, 1 );
@@ -5759,6 +5656,19 @@ new Vue({
 					})
 				}
 
+				if ( record.type == "TXT" ) {
+					// Check for value wrapped in quotes. If not add them.
+					record.update.record_value.forEach( v => {
+						v.value = v.value.trim();
+						if ( v.value.substr(0,1) != '"' ) {
+							v.value = '"' + v.value;
+						}
+						if ( v.value.substr(v.value.length - 1) != '"' ) {
+							v.value = v.value + '"';
+						}
+					})
+				}
+
 				if ( record.type == "HTTPRedirection" ) {
 					record_value = record.update.record_value.trim();
 				}
@@ -5849,7 +5759,7 @@ new Vue({
 					// Removed existing new recording matching type, name, value and ttl.
 					this.dialog_domain.records = this.dialog_domain.records.filter( r => r.update.record_status != "new-record" && r.update.record_name != result.name )
 
-					if ( result.type == "A" || result.type == "AAAA" || result.type == "SPF" || result.type == "TXT" ) {
+					if ( result.type == "A" || result.type == "AAAA" || result.type == "SPF" ) {
 						record_value = [];
 						result.value.forEach( r => {
 							record_value.push({ value: r });
@@ -5937,18 +5847,17 @@ new Vue({
 
 			self = this;
 
-			jQuery.post(ajaxurl, data, function(response) {
-				
-				// Reset dialog
-				self.dialog_modify_plan = { show: false, site: {}, hosting_plan: {}, hosting_addons: [], selected_plan: "", customer_name: "" };
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					// Reset dialog
+					self.dialog_modify_plan = { show: false, site: {}, hosting_plan: {}, hosting_addons: [], selected_plan: "", customer_name: "" };
 
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].status = "done";
+					// Updates job id with reponsed background job id
+					self.jobs.filter(job => job.job_id == job_id)[0].status = "done";
 
-				// Fetch new usage breakdown
-				self.viewUsageBreakdown( site_id )
-				self.fetchSiteInfo( site_id )
-
+					// Fetch new usage breakdown
+					self.viewUsageBreakdown( site_id )
+					self.fetchSiteInfo( site_id )
 			});
 
 		},
@@ -6253,6 +6162,14 @@ new Vue({
 				})
 			  .catch( error => console.log( error ) );
 		},
+		expandQuicksave( item, site_id, environment ) {
+			table_name = "quicksave_table_" + site_id + "_" + environment;
+			if ( typeof this.$refs[table_name][0].expansion[item.quicksave_id] == 'boolean' ) {
+				this.$refs[table_name][0].expansion = ""
+			} else {
+				this.$refs[table_name][0].expansion = { [item.quicksave_id] : true }
+			}
+		},
 		viewQuicksaves( site_id ) {
 
 			site = this.sites.filter(site => site.id == site_id)[0];
@@ -6263,6 +6180,19 @@ new Vue({
 				.then(response => { 
 						site.environments[0].quicksaves = response.data.Production
 						site.environments[1].quicksaves = response.data.Staging				
+				});
+
+		},
+		viewSnapshots( site_id ) {
+
+			site = this.sites.filter(site => site.id == site_id)[0];
+			axios.get(
+				'/wp-json/captaincore/v1/site/'+site_id+'/snapshots', {
+					headers: {'X-WP-Nonce':wpApiSettings.nonce}
+				})
+				.then(response => { 
+						site.environments[0].snapshots = response.data.Production
+						site.environments[1].snapshots = response.data.Staging				
 				});
 
 		},
@@ -6295,11 +6225,11 @@ new Vue({
 
 			self = this;
 
-			jQuery.post(ajaxurl, data, function(response) {
-				site.loading_themes = false;
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-				self.runCommand( response );
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					site.loading_themes = false;
+					self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+					self.runCommand( response.data );
 			});
 		},
 		deleteTheme (theme_name, site_id) {
@@ -6333,14 +6263,15 @@ new Vue({
 
 			self = this;
 
-			jQuery.post(ajaxurl, data, function(response) {
-				environment = site.environments.filter( e => e.environment == site.environment_selected )[0]
-				updated_themes = environment.themes.filter(theme => theme.name != theme_name);
-				environment.themes = updated_themes;
-				site.loading_themes = false;
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-				self.runCommand( response );
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					environment = site.environments.filter( e => e.environment == site.environment_selected )[0]
+					updated_themes = environment.themes.filter(theme => theme.name != theme_name);
+					environment.themes = updated_themes;
+					site.loading_themes = false;
+					// Updates job id with reponsed background job id
+					self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+					self.runCommand( response.data );
 			});
 
 		},
@@ -6732,16 +6663,16 @@ new Vue({
 
 			self = this;
 
-			jQuery.post(ajaxurl, data, function(response) {
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					environment = site.environments.filter( e => e.environment == site.environment_selected )[0]
+					updated_plugins = environment.plugins.filter(plugin => plugin.name != plugin_name);
+					environment.plugins = updated_plugins;
+					self.sites.filter(site => site.id == site_id)[0].loading_plugins = false;
 
-				environment = site.environments.filter( e => e.environment == site.environment_selected )[0]
-				updated_plugins = environment.plugins.filter(plugin => plugin.name != plugin_name);
-				environment.plugins = updated_plugins;
-				self.sites.filter(site => site.id == site_id)[0].loading_plugins = false;
-
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-				self.runCommand( response );
+					// Updates job id with reponsed background job id
+					self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+					self.runCommand( response.data );
 			});
 		},
 		update( site_id ) {
@@ -6768,11 +6699,11 @@ new Vue({
 
 			self = this;
 
-			jQuery.post(ajaxurl, data, function(response) {
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-				self.runCommand( response );
-			});
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+					self.runCommand( response.data );
+				});
 
 		},
 		themeAndPluginChecks( site_id ) {
@@ -6890,16 +6821,14 @@ new Vue({
 
 			self = this;
 
-			jQuery.post(ajaxurl, data, function(response) {
-				// close dialog
-				self.dialog_fathom.site = {};
-				self.dialog_fathom.show = false;
-
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-				self.runCommand( response );
-
-			});
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					// close dialog
+					self.dialog_fathom.site = {};
+					self.dialog_fathom.show = false;
+					self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+					self.runCommand( response.data );
+				});
 		},
 		updateSettings( site_id ) {
 			this.dialog_update_settings.show = true;
@@ -6946,13 +6875,11 @@ new Vue({
 			self.dialog_update_settings.show = false;
 			self.dialog_update_settings.loading = false;
 
-			jQuery.post(ajaxurl, data, function(response) {
-
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-				self.runCommand( response );
-
-			});
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+					self.runCommand( response.data );
+				});
 
 		},
 		deleteUserDialog( username, site_id ){
@@ -7003,19 +6930,17 @@ new Vue({
 
 			self = this;
 
-			jQuery.post(ajaxurl, data, function(response) {
-				environment.users = environment.users.filter(user => user.username != username);
-
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-				self.runCommand( response );
-				self.dialog_delete_user.show = false
-				self.dialog_delete_user.site = {}
-				self.dialog_delete_user.reassign = {}
-				self.dialog_delete_user.username = ""
-				self.dialog_delete_user.users = []
-
-			});
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					environment.users = environment.users.filter(user => user.username != username);
+					self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+					self.runCommand( response.data );
+					self.dialog_delete_user.show = false
+					self.dialog_delete_user.site = {}
+					self.dialog_delete_user.reassign = {}
+					self.dialog_delete_user.username = ""
+					self.dialog_delete_user.users = []
+				});
 
 		},
 		bulkactionLaunch() {
@@ -7049,15 +6974,14 @@ new Vue({
 			job_id = Math.round((new Date()).getTime());
 			this.jobs.push({"job_id": job_id,"description": description, "status": "queued", stream: [], "command": "manage"});
 
-			// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
-			jQuery.post(ajaxurl, data, function(response) {
-				// Updates job id with reponsed background job id
-				self.jobs.filter(job => job.job_id == job_id)[0].job_id = response;
-				self.runCommand( response );
-				self.snackbar.message = description;
-				self.snackbar.show = true;
-				self.dialog = false;
-		  });
+			axios.post( ajaxurl, Qs.stringify( data ) )
+				.then( response => {
+					self.jobs.filter(job => job.job_id == job_id)[0].job_id = response.data;
+					self.runCommand( response.data );
+					self.snackbar.message = description;
+					self.snackbar.show = true;
+					self.dialog = false;
+		  	});
 		},
 		selectSites() {
 			if (this.site_selected == "all") {
@@ -7357,38 +7281,5 @@ new Vue({
 });
 
 </script>
-
-<?php } else { ?>
-
-	<div id="primary" class="content-area">
-	<main id="main" class="site-main" role="main">
-
-		<section class="error-404 not-found">
-			<?php
-			$featured_image = '';
-			$c              = '';
-
-				$blog_page_id = get_option( 'page_for_posts' );
-				$blog_page    = get_post( $blog_page_id );
-			if ( has_post_thumbnail( $blog_page_id ) ) {
-				$featured_image = wp_get_attachment_image_src( get_post_thumbnail_id( $blog_page_id ), 'swell_full_width' );
-				$c              = 'has-background';
-			}
-				?>
-				<header class="main entry-header <?php echo $c; ?>" style="<?php echo $featured_image ? 'background-image: url(' . esc_url( $featured_image[0] ) . ');' : ''; ?>">
-					<h1 class="entry-title"><h1 class="page-title"><?php _e( 'Oops! That page can&rsquo;t be found.', 'swell' ); ?></h1>
-					<span class="overlay"></span>
-				</header><!-- .entry-header -->
-
-		<div class="body-wrap">
-		<div class="entry-content">
-			<p><?php _e( 'The page you are looking for could not be found. Try a different address, or search using the form below.', 'swell' ); ?></p>
-			<?php get_search_form(); ?>
-		</div>
-		</div>
-		</section><!-- .error-404 -->
-
-	</main><!-- #main -->
-</div><!-- #primary -->
-
-<?php } ?>
+</body>
+</html>

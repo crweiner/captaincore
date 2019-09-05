@@ -13,10 +13,10 @@
  * @package           Captaincore
  *
  * @wordpress-plugin
- * Plugin Name:       CaptainCore GUI
+ * Plugin Name:       CaptainCore
  * Plugin URI:        https://captaincore.io
  * Description:       Open Source Toolkit for Managing WordPress Sites
- * Version:           0.5.0
+ * Version:           0.6.0
  * Author:            Austin Ginder
  * Author URI:        https://twitter.com/austinginder
  * License:           GPL-2.0+
@@ -83,7 +83,6 @@ function run_captaincore() {
 run_captaincore();
 
 require 'includes/register-custom-fields.php';
-require 'includes/woocommerce-my-account-endpoints.php';
 require 'includes/constellix-api/constellix-api.php';
 require 'includes/woocommerce-custom-password-fields.php';
 require 'includes/mailgun-api.php';
@@ -134,16 +133,12 @@ function captaincore_my_account_order( $current_menu ) {
 	$user = wp_get_current_user();
 
 	$role_check_admin      = in_array( 'administrator', $user->roles );
-	$role_check_partner    = in_array( 'partner', $user->roles ) + in_array( 'administrator', $user->roles ) + in_array( 'editor', $user->roles );
-	$role_check_subscriber = in_array( 'subscriber', $user->roles ) + in_array( 'partner', $user->roles ) + in_array( 'administrator', $user->roles ) + in_array( 'editor', $user->roles );
+	$role_check_subscriber = in_array( 'subscriber', $user->roles ) + in_array( 'administrator', $user->roles ) + in_array( 'editor', $user->roles );
 
 	if ( ! $role_check_admin ) {
 		unset( $current_menu['handbook'] );
 		unset( $current_menu['cookbook'] );
 		unset( $current_menu['manage'] );
-	}
-	if ( ! $role_check_partner ) {
-		unset( $current_menu['configs'] );
 	}
 	if ( ! $role_check_subscriber ) {
 		unset( $current_menu['dns'] );
@@ -792,7 +787,12 @@ function slug_get_post_meta_cb( $object, $field_name, $request ) {
 	return get_post_meta( $object['id'], $field_name );
 }
 function slug_get_paid_by( $object, $field_name, $request ) {
-		$post_id = get_post_meta( $object['id'], $field_name )[0][0];
+	$post_title = "";
+	$post_id = get_post_meta( $object['id'], $field_name );
+	if ( !isset( $post_id ) || !isset( $post_id[0] ) || !isset( $post_id[0][0] ) ) {
+		return $post_title;
+	}
+	$post_id = $post_id[0][0];
 	if ( $post_id ) {
 		$post_title = get_the_title( $post_id );
 	}
@@ -1130,7 +1130,7 @@ function acf_load_color_field_choices( $field ) {
 
 }
 
-add_filter( 'acf/load_field/key=field_590681f3c0775', 'acf_load_color_field_choices' );
+// add_filter( 'acf/load_field/key=field_590681f3c0775', 'acf_load_color_field_choices' );
 
 // run after ACF saves
 add_action( 'acf/save_post', 'captaincore_acf_save_post_after', 20 );
@@ -1412,6 +1412,8 @@ function captaincore_api_func( WP_REST_Request $request ) {
 	$token_key           = $post->token_key;
 	$data                = $post->data;
 	$site_id             = $post->site_id;
+	$user_id             = $post->user_id;
+	$notes               = $post->notes;
 
 	// Error if token not valid
 	if ( $post->token != CAPTAINCORE_CLI_TOKEN ) {
@@ -1500,28 +1502,35 @@ function captaincore_api_func( WP_REST_Request $request ) {
 	// Generate a new snapshot.
 	if ( $command == 'snapshot' and $archive and $storage ) {
 
-		// Create post object
-		$my_post = array(
-			'post_title'  => 'Snapshot',
-			'post_type'   => 'captcore_snapshot',
-			'post_status' => 'publish',
+		if ( $environment == "production" ) {
+			$environment_id = get_field( 'environment_production_id', $site_id );
+		}
+		if ( $environment == "staging" ) {
+			$environment_id = get_field( 'environment_staging_id', $site_id );
+		}
+
+		if ( $user_id == "") {
+			$user_id = "0";
+		}
+
+		$time_now = date("Y-m-d H:i:s");
+		$in_24hrs = date("Y-m-d H:i:s", strtotime ( date("Y-m-d H:i:s")."+24 hours" ) );
+		$token    = bin2hex( openssl_random_pseudo_bytes( 16 ) );
+		$snapshot = array(
+			'user_id'        => $user_id,
+			'site_id'        => $site_id,
+			'environment_id' => $environment_id,
+			'snapshot_name'  => $archive,
+			'created_at'     => $time_now,
+			'storage'        => $storage,
+			'email'          => $email,
+			'notes'          => $notes,
+			'expires_at'     => $in_24hrs,
+			'token'          => $token
 		);
 
-		// Insert the post into the database
-		$snapshot_id = wp_insert_post( $my_post );
-
-		update_field( 'field_580b7cf4f2790', $archive, $snapshot_id );
-		update_field( 'field_580b9776f2791', $storage, $snapshot_id );
-		update_field( 'field_580b9784f2792', $site_id, $snapshot_id );
-		update_field( 'field_59aecbd173318', $email, $snapshot_id );
-
-		// Adds snapshot ID to title
-		$my_post = array(
-			'ID'         => $snapshot_id,
-			'post_title' => 'Snapshot ' . $snapshot_id,
-		);
-
-		wp_update_post( $my_post );
+		$db = new CaptainCore\snapshots();
+		$snapshot_id = $db->insert( $snapshot );
 
 		// Send out snapshot email
 		captaincore_download_snapshot_email( $snapshot_id );
@@ -1798,6 +1807,53 @@ function captaincore_domains_func( $request ) {
 
 }
 
+function captaincore_site_snapshots_func( $request ) {
+	$site_id = $request['id'];
+
+	if ( ! captaincore_verify_permissions( $site_id ) ) {
+		return new WP_Error( 'token_invalid', 'Invalid Token', array( 'status' => 403 ) );
+	}
+
+	$db = new CaptainCore\snapshots;
+	$snapshots = $db->fetch_by_environments( $site_id );
+	foreach( $snapshots as $environment ) {
+
+		foreach( $environment as $snapshot ) {
+			if ( $snapshot->user_id == 0 ) {
+				$user_name = "System";
+			} else {
+				$user_name = get_user_by( 'id', $snapshot->user_id )->display_name;
+			}
+			$snapshot->user = (object) [
+				"user_id" => $snapshot->user_id,
+				"name"    => $user_name
+			];
+			unset( $snapshot->user_id );
+		}
+
+	}
+	return $snapshots;
+}
+
+function captaincore_site_snapshot_download_func( $request ) {
+	$site_id       = $request['id'];
+	$token         = $request['token'];
+	$snapshot_id   = $request['snapshot_id'];
+	$snapshot_name = $request['snapshot_name'] . ".zip";
+
+	// Verify Snapshot link is valid
+	$db = new CaptainCore\snapshots();
+	$snapshot = $db->get( $snapshot_id );
+
+	if ( $snapshot->snapshot_name != $snapshot_name || $snapshot->site_id != $site_id || $snapshot->token != $token ) {
+		return new WP_Error( 'token_invalid', 'Invalid Token', array( 'status' => 403 ) );
+	}
+
+	$snapshot_url = captaincore_snapshot_download_link( $snapshot_id  );
+	header('Location: ' . $snapshot_url);
+	exit;
+}
+
 function captaincore_site_quicksaves_func( $request ) {
 	$site_id = $request['id'];
 
@@ -1809,7 +1865,7 @@ function captaincore_site_quicksaves_func( $request ) {
 	$db_quicksaves = new CaptainCore\quicksaves;
 
 	$environment_id = get_field( 'environment_production_id', $site_id );
-	$quicksaves = $db_quicksaves->fetch_quicksaves( $site_id, $environment_id );
+	$quicksaves = $db_quicksaves->fetch_environment( $site_id, $environment_id );
 
 	foreach ($quicksaves as $key => $quicksave) {
 		$compare_key = $key + 1;
@@ -1926,7 +1982,7 @@ function captaincore_site_quicksaves_func( $request ) {
 	$results["Production"] = $quicksaves; 
 
 	$environment_id = get_field( 'environment_staging_id', $site_id );
-	$quicksaves = $db_quicksaves->fetch_quicksaves( $site_id, $environment_id );
+	$quicksaves = $db_quicksaves->fetch_environment( $site_id, $environment_id );
 
 	foreach ($quicksaves as $key => $quicksave) {
 		$compare_key = $key + 1;
@@ -2066,11 +2122,38 @@ function captaincore_register_rest_endpoints() {
 		)
 	);
 
+	// Custom endpoint for CaptainCore login
+	register_rest_route(
+		'captaincore/v1', '/login', array(
+			'methods'       => 'POST',
+			'callback'      => 'captaincore_login_func',
+			'show_in_index' => false
+		)
+	);
+
 	// Custom endpoint for CaptainCore site
 	register_rest_route(
 		'captaincore/v1', '/site/(?P<id>[\d]+)/quicksaves', array(
 			'methods'       => 'GET',
 			'callback'      => 'captaincore_site_quicksaves_func',
+			'show_in_index' => false
+		)
+	);
+
+	// Custom endpoint for CaptainCore site
+	register_rest_route(
+		'captaincore/v1', '/site/(?P<id>[\d]+)/snapshots', array(
+			'methods'       => 'GET',
+			'callback'      => 'captaincore_site_snapshots_func',
+			'show_in_index' => false
+		)
+	);
+
+	// Custom endpoint for CaptainCore site
+	register_rest_route(
+		'captaincore/v1', '/site/(?P<id>[\d]+)/snapshots/(?P<snapshot_id>[\d]+)-(?P<token>[a-zA-Z0-9-]+)/(?P<snapshot_name>[a-zA-Z0-9-]+)', array(
+			'methods'       => 'GET',
+			'callback'      => 'captaincore_site_snapshot_download_func',
 			'show_in_index' => false
 		)
 	);
@@ -2210,7 +2293,7 @@ function captaincore_register_rest_endpoints() {
 		)
 	);
 	register_rest_field(
-		'captcore_customer', 'preloaded_plugins',
+		'captcore_customer', 'default_recipes',
 		array(
 			'get_callback'    => 'slug_get_post_meta_array',
 			'update_callback' => 'slug_update_post_meta_cb',
@@ -2331,6 +2414,16 @@ function captaincore_register_rest_endpoints() {
 	);
 
 };
+
+function captaincore_login_func( WP_REST_Request $request ) {
+
+	$post = json_decode( file_get_contents( 'php://input' ) );
+
+	if ( $post->command == "signOut" ) {
+		wp_logout();
+	}
+
+}
 
 add_action( 'manage_posts_custom_column', 'customer_custom_columns' );
 add_filter( 'manage_edit-captcore_website_columns', 'website_edit_columns' );
@@ -2646,7 +2739,11 @@ function checkApiAuth( $result ) {
 		// custom auth on website endpoint, excluding global posts
 		if ( $endpoint == 'captcore_website' ) {
 
+			$website_id = null;
+
+			if ( isset($endpoint_all[1]) ) {
 			$website_id = $endpoint_all[1];
+			}
 
 			$token  = $_GET['token'];
 			$domain = $_GET['search'];
@@ -2839,6 +2936,22 @@ function captaincore_get_domains_per_partner( $partner_id ) {
 			endforeach;
 
 		endforeach;
+
+		// Sort array by domain name
+		ksort( $all_domains );
+
+	}
+
+	// None found, check directly
+	if ( count( $all_domains ) == 0 ) {
+
+		$domains = get_field( 'domains', $partner_id );
+		if ( $domains ) {
+			foreach ( $domains as $domain ) :
+				$domain_name                 = get_the_title( $domain );
+				$all_domains[ $domain_name ] = $domain;
+			endforeach;
+		}
 
 		// Sort array by domain name
 		ksort( $all_domains );
@@ -3357,12 +3470,9 @@ function captaincore_local_action_callback() {
 		if ( $partner ) {
 			foreach ( $partner as $partner_id ) {
 				$default_users = get_field( 'preloaded_users', $partner_id );
-				$default_plugins = array_column( get_field( 'preloaded_plugins', $partner_id ), "plugin" );
+				$default_recipes = get_field( 'default_recipes', $partner_id );
 				if ( $default_users == "" ){
 					$default_users = array();
-				}
-				if ( $default_plugins == "" ){
-					$default_plugins = array();
 				}
 				$accounts[] = (object) [
 					'account'          => array(
@@ -3371,7 +3481,7 @@ function captaincore_local_action_callback() {
 					),
 					'default_email'    => get_field( 'preloaded_email', $partner_id ),
 					'default_users'    => $default_users,
-					'default_plugins'  => $default_plugins,
+					'default_recipes'  => $default_recipes,
 					'default_timezone' => get_field( 'default_timezone', $partner_id ),
 				];
 			}
@@ -3386,15 +3496,9 @@ function captaincore_local_action_callback() {
 		$account_id = $record->account["id"];
 		$account_ids = get_field( 'partner', 'user_' . get_current_user_id() );
 		if ( in_array( $account_id, $account_ids ) ) {
-
-			$default_plugins = array();
-			foreach ($record->default_plugins as $plugin) {
-				$default_plugins[] = array( "plugin" => $plugin );
-			}
-
 			update_field( 'preloaded_email', $record->default_email, $account_id );
 			update_field( 'preloaded_users', $record->default_users, $account_id );
-			update_field( 'preloaded_plugins', $default_plugins, $account_id );
+			update_field( 'default_recipes', $record->default_recipes, $account_id );
 			update_field( 'default_timezone', $record->default_timezone, $account_id );
 			echo json_encode( "Record updated." );
 		} else {
@@ -3408,7 +3512,7 @@ function captaincore_local_action_callback() {
 		$accounts = array();
 
 		$user = wp_get_current_user();
-		$role_check = in_array( 'subscriber', $user->roles ) + in_array( 'customer', $user->roles ) + in_array( 'partner', $user->roles ) + in_array( 'administrator', $user->roles) + in_array( 'editor', $user->roles );
+		$role_check = in_array( 'subscriber', $user->roles ) + in_array( 'customer', $user->roles ) + in_array( 'administrator', $user->roles) + in_array( 'editor', $user->roles );
 		$partner = get_field('partner', 'user_'. get_current_user_id());
 
 		if ($partner and $role_check) {
@@ -3545,7 +3649,7 @@ function captaincore_ajax_action_callback() {
 	// Only proceed if access to command 
 	$user = wp_get_current_user();
 	$role_check_admin = in_array( 'administrator', $user->roles );
-	$admin_commands = array( 'fetchConfigs', 'newRecipe', 'updateRecipe', 'updateLogEntry', 'newLogEntry', 'newProcess', 'updateProcess', 'fetchProcess', 'fetchProcessLogs', 'updateFathom', 'updatePlan', 'newSite', 'editSite', 'deleteSite' );
+	$admin_commands = array( 'addDomain', 'fetchConfigs', 'newRecipe', 'updateRecipe', 'updateLogEntry', 'newLogEntry', 'newProcess', 'updateProcess', 'fetchProcess', 'fetchProcessLogs', 'updateFathom', 'updatePlan', 'newSite', 'editSite', 'deleteSite' );
 	if ( ! $role_check_admin && in_array( $_POST['command'], $admin_commands ) ) {
 		echo "Permission denied";
 		wp_die();
@@ -3589,6 +3693,61 @@ function captaincore_ajax_action_callback() {
 
 		echo json_encode( $response );
 
+	}
+
+	if ( $cmd == 'addDomain' ) {
+
+		$record = (object) $value;
+		// Check for duplicate domain.
+		$domain_exists = get_posts(
+			array(
+				'title'          => $record->name,
+				'post_type'      => 'captcore_domain',
+				'posts_per_page' => '-1',
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+			)
+		);
+
+		 // If results still exists then give an error
+		if ( count( $domain_exists ) > 0 ) {
+			echo json_encode( array( "error" => 'Domain has already been added.' ) );
+			wp_die();
+		}
+
+		// Create post object
+		$new_domain = array(
+			'post_status' => 'publish',
+			'post_type'   => 'captcore_domain',
+			'post_title'  => $record->name,
+			'post_author' => get_current_user_id(),
+		);
+
+		// Insert the post into the database
+		$domain_id = wp_insert_post( $new_domain );
+
+		echo json_encode( $record );
+
+	}
+
+	if ( $cmd == 'fetchLink' ) {
+		// Fetch snapshot details
+		$db = new CaptainCore\snapshots;
+		$in_24hrs = date("Y-m-d H:i:s", strtotime ( date("Y-m-d H:i:s")."+24 hours" ) );
+
+		// Generate new token
+		$token = bin2hex( openssl_random_pseudo_bytes( 16 ) );
+		$db->update(
+			array( "token"       => $token,
+				   "expires_at"  => $in_24hrs ),
+			array( "snapshot_id" => $value )
+		);
+		echo json_encode( 
+			array( 
+				"token"       => $token,
+				"expires_at"  => $in_24hrs
+			)
+		);
 	}
 
 	if ( $cmd == 'fetchPlugins' ) {
@@ -4548,6 +4707,7 @@ function captaincore_install_action_callback() {
 	$link         = $_POST['link'];
 	$background   = $_POST['background'];
 	$job_id       = $_POST['job_id'];
+	$notes        = $_POST['notes'];
 
 	$site         = get_field( 'site', $post_id );
 	$provider     = get_field( 'provider', $post_id );
@@ -4697,12 +4857,13 @@ function captaincore_install_action_callback() {
 	}
 	if ( $cmd == 'snapshot' ) {
 		$run_in_background = true;
+		$user_id = get_current_user_id();
 		if ( $date && $value ) {
-			$command = "snapshot $site --email=$value --rollback='$date'";
+			$command = "snapshot $site --email=$value --rollback=\"$date\" --user_id=$user_id --notes=\"$notes\"";
 		} elseif ( $value ) {
-			$command = "snapshot $site --email=$value";
+			$command = "snapshot $site --email=$value --user_id=$user_id --notes=\"$notes\"";
 		} else {
-			$command = "snapshot $site";
+			$command = "snapshot $site --user_id=$user_id --notes=\"$notes\"";
 		}
 
 		if ( $filters ) {
@@ -4954,118 +5115,121 @@ function captaincore_site_fetch_details( $post_id ) {
 }
 
 function captaincore_create_tables() {
-    global $wpdb;
 
-		$version = (int) get_site_option('captcorecore_db_version');
-    $charset_collate = $wpdb->get_charset_collate();
+	global $wpdb;
+	$required_version = 15;
+	$version = (int) get_site_option('captcorecore_db_version');
+	$charset_collate = $wpdb->get_charset_collate();
 
-		if ( $version < 4 ) {
-			$sql = "CREATE TABLE `{$wpdb->base_prefix}captaincore_update_logs` (
-				log_id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-				site_id bigint(20) UNSIGNED NOT NULL,
-				environment_id bigint(20) UNSIGNED NOT NULL,
-				created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-				update_type varchar(255),
-				update_log longtext,
-			PRIMARY KEY  (log_id)
-			) $charset_collate;";
+	if ( $version < $required_version ) {
 
-			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-			dbDelta($sql);
-			$success = empty($wpdb->last_error);
+		$sql = "CREATE TABLE `{$wpdb->base_prefix}captaincore_update_logs` (
+			log_id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			site_id bigint(20) UNSIGNED NOT NULL,
+			environment_id bigint(20) UNSIGNED NOT NULL,
+			created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+			update_type varchar(255),
+			update_log longtext,
+		PRIMARY KEY  (log_id)
+		) $charset_collate;";
 
-			update_site_option('captcorecore_db_version', 4);
-			return $success;
-		}
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($sql);
+		$success = empty($wpdb->last_error);
 
-		if ( $version < 5 ) {
-			$sql = "CREATE TABLE `{$wpdb->base_prefix}captaincore_quicksaves` (
-				quicksave_id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-				site_id bigint(20) UNSIGNED NOT NULL,
-				environment_id bigint(20) UNSIGNED NOT NULL,
-				created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-				git_status varchar(255),
-				git_commit varchar(100),
-				core varchar(10),
-				themes longtext,
-				plugins longtext,
-			PRIMARY KEY  (quicksave_id)
-			) $charset_collate;";
+		$sql = "CREATE TABLE `{$wpdb->base_prefix}captaincore_quicksaves` (
+			quicksave_id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			site_id bigint(20) UNSIGNED NOT NULL,
+			environment_id bigint(20) UNSIGNED NOT NULL,
+			created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+			git_status varchar(255),
+			git_commit varchar(100),
+			core varchar(10),
+			themes longtext,
+			plugins longtext,
+		PRIMARY KEY  (quicksave_id)
+		) $charset_collate;";
 
-			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-			dbDelta($sql);
-			$success = empty($wpdb->last_error);
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($sql);
+		$success = empty($wpdb->last_error);
 
-			update_site_option('captcorecore_db_version', 5);
-			return $success;
-		}
+		$sql = "CREATE TABLE `{$wpdb->base_prefix}captaincore_snapshots` (
+			snapshot_id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id bigint(20) UNSIGNED NOT NULL,
+			site_id bigint(20) UNSIGNED NOT NULL,
+			environment_id bigint(20) UNSIGNED NOT NULL,
+			created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+			snapshot_name varchar(255),
+			storage varchar(20),
+			email varchar(100),
+			notes longtext,
+			expires_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+			token varchar(32),
+		PRIMARY KEY  (snapshot_id)
+		) $charset_collate;";
 
-		if ( $version < 10 ) {
-			$sql = "CREATE TABLE `{$wpdb->base_prefix}captaincore_environments` (
-				environment_id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-				site_id bigint(20) UNSIGNED NOT NULL,
-				created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-				updated_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-				environment varchar(255),
-				address varchar(255),
-				username varchar(255),
-				password varchar(255),
-				protocol varchar(255),
-				port varchar(255),
-				fathom varchar(255),
-				home_directory varchar(255),
-				database_username varchar(255),
-				database_password varchar(255),
-				offload_enabled boolean,
-				offload_provider varchar(255),
-				offload_access_key varchar(255),
-				offload_secret_key varchar(255),
-				offload_bucket varchar(255),
-				offload_path varchar(255),
-				storage varchar(20),
-				visits varchar(20),
-				core varchar(10),
-				subsite_count varchar(10),
-				home_url varchar(255),
-				themes longtext,
-				plugins longtext,
-				users longtext,
-				screenshot boolean,
-				updates_enabled boolean,
-				updates_exclude_themes longtext,
-				updates_exclude_plugins longtext,
-			PRIMARY KEY  (environment_id)
-			) $charset_collate;";
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($sql);
+		$success = empty($wpdb->last_error);
 
-			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-			dbDelta($sql);
-			$success = empty($wpdb->last_error);
+		$sql = "CREATE TABLE `{$wpdb->base_prefix}captaincore_environments` (
+			environment_id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			site_id bigint(20) UNSIGNED NOT NULL,
+			created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+			updated_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+			environment varchar(255),
+			address varchar(255),
+			username varchar(255),
+			password varchar(255),
+			protocol varchar(255),
+			port varchar(255),
+			fathom varchar(255),
+			home_directory varchar(255),
+			database_username varchar(255),
+			database_password varchar(255),
+			offload_enabled boolean,
+			offload_provider varchar(255),
+			offload_access_key varchar(255),
+			offload_secret_key varchar(255),
+			offload_bucket varchar(255),
+			offload_path varchar(255),
+			storage varchar(20),
+			visits varchar(20),
+			core varchar(10),
+			subsite_count varchar(10),
+			home_url varchar(255),
+			themes longtext,
+			plugins longtext,
+			users longtext,
+			screenshot boolean,
+			updates_enabled boolean,
+			updates_exclude_themes longtext,
+			updates_exclude_plugins longtext,
+		PRIMARY KEY  (environment_id)
+		) $charset_collate;";
 
-			update_site_option('captcorecore_db_version', 10);
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($sql);
+		$success = empty($wpdb->last_error);
 
-			return $success;
-		}
+		$sql = "CREATE TABLE `{$wpdb->base_prefix}captaincore_recipes` (
+			recipe_id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id bigint(20) UNSIGNED NOT NULL,
+			title varchar(255),
+			created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+			updated_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+			content longtext,
+			public boolean,
+		PRIMARY KEY  (recipe_id)
+		) $charset_collate;";
 
-		if ( $version < 11 ) {
-			$sql = "CREATE TABLE `{$wpdb->base_prefix}captaincore_recipes` (
-				recipe_id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-				user_id bigint(20) UNSIGNED NOT NULL,
-				title varchar(255),
-				created_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-				updated_at datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-				content longtext,
-				public boolean,
-			PRIMARY KEY  (recipe_id)
-			) $charset_collate;";
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($sql);
+		$success = empty($wpdb->last_error);
 
-			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-			dbDelta($sql);
-			$success = empty($wpdb->last_error);
-
-			update_site_option('captcorecore_db_version', 11);
-
-			return $success;
-		}
+		update_site_option('captcorecore_db_version', $required_version );
+	}
 
 }
 
@@ -5304,35 +5468,6 @@ function captaincore_load_environments( $value, $post_id, $field ) {
 }
 
 function captaincore_website_acf_actions( $field ) {
-
-	if ( $field and $field['label'] == 'Download Snapshot' ) {
-
-		$id = get_the_ID();
-
-		?>
-		<script>
-		jQuery(document).ready(function(){
-		  jQuery("#download").click(function(e){
-			e.preventDefault();
-			var data = {
-				'action': 'snapshot_email',
-				'snapshot_id': <?php echo $id; ?>,
-				'email': 'austin@anchor.host'
-			};
-
-				// since 2.8 ajaxurl is always defined in the admin header and points to admin-ajax.php
-				jQuery.post(ajaxurl, data, function(response) {
-					jQuery('.download-result').html(response);
-				});
-
-		  });
-		});
-		</script>
-		<input type="button" value="Download Snapshot" id="download" class="button">
-		<div class="download-result"></div>
-		<?php
-
-	}
 
 	if ( $field and $field['label'] == 'Websites' ) {
 
@@ -5703,29 +5838,42 @@ function log_process_completed_callback() {
 	wp_die(); // this is required to terminate immediately and return a proper response
 }
 
-// Fetch Backblaze link for snapshot and sends email
-add_action( 'wp_ajax_snapshot_email', 'snapshot_email_action_callback' );
+function captaincore_download_snapshot_email( $snapshot_id ) {
 
-function snapshot_email_action_callback() {
-	global $wpdb; // this is how you get access to the database
+	// Fetch snapshot details
+	$db       = new CaptainCore\snapshots;
+	$snapshot = $db->get( $snapshot_id );
+	$name     = $snapshot->snapshot_name;
+	$domain   = get_the_title( $snapshot->site_id );
+	$site     = get_field( 'site', $snapshot->site_id );
 
-	// Variables from JS request
-	$snapshot_id = intval( $_POST['snapshot_id'] );
-	captaincore_download_snapshot_email( $snapshot_id );
+	// Generate download url to snapshot
+	$home_url = home_url();
+	$file_name = substr($snapshot->snapshot_name, 0, -4);
+	$download_url = "{$home_url}/wp-json/captaincore/v1/site/{$snapshot->site_id}/snapshots/{$snapshot->snapshot_id}-{$snapshot->token}/{$file_name}";
 
-	wp_die(); // this is required to terminate immediately and return a proper response
+	// Build email
+	$company = get_field( 'business_name', 'option' );
+	$to      = $snapshot->email;
+	$subject = "$company - Snapshot #$snapshot_id";
+	$body    = "Snapshot #{$snapshot_id} for {$domain}. Expires after 1 week.<br /><br /><a href=\"{$download_url}\">Download Snapshot</a>";
+	$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+
+	// Send email
+	wp_mail( $to, $subject, $body, $headers );
+
 }
 
-function captaincore_download_snapshot_email( $snapshot_id ) {
-	$email      = get_field( 'email', $snapshot_id );
-	$name       = get_field( 'name', $snapshot_id );
-	$website    = get_field( 'website', $snapshot_id );
-	$website_id = $website[0];
-	$domain     = get_the_title( $website_id );
-	$site       = get_field( 'site', $website_id );
+function captaincore_snapshot_download_link( $snapshot_id ) {
+
+	$db       = new CaptainCore\snapshots;
+	$snapshot = $db->get( $snapshot_id );
+	$name     = $snapshot->snapshot_name;
+	$domain   = get_the_title( $snapshot->site_id );
+	$site     = get_field( 'site', $snapshot->site_id);
 
 	// Get new auth from B2
-	$account_id      = CAPTAINCORE_B2_ACCOUNT_ID; // Obtained from your B2 account page
+	$account_id      = CAPTAINCORE_B2_ACCOUNT_ID;  // Obtained from your B2 account page
 	$application_key = CAPTAINCORE_B2_ACCOUNT_KEY; // Obtained from your B2 account page
 	$credentials     = base64_encode( $account_id . ':' . $application_key );
 	$url             = 'https://api.backblazeb2.com/b2api/v1/b2_authorize_account';
@@ -5771,18 +5919,10 @@ function captaincore_download_snapshot_email( $snapshot_id ) {
 	curl_close( $session );                                // Clean up
 	$server_output = json_decode( $server_output );
 	$auth          = $server_output->authorizationToken;
-	$url           = 'https://f001.backblazeb2.com/file/' . CAPTAINCORE_B2_SNAPSHOTS . "/${site}_${website_id}/$name?Authorization=" . $auth;
+	$b2_snapshots  = CAPTAINCORE_B2_SNAPSHOTS;
+	$url           = "https://f001.backblazeb2.com/file/{$b2_snapshots}/{$site}_{$snapshot->site_id}/{$name}?Authorization={$auth}";
 
-	echo $url;
-
-	$business_name = get_field('business_name', 'option');
-
-	$to      = $email;
-	$subject = "$business_name - Snapshot #$snapshot_id";
-	$body    = 'Snapshot #' . $snapshot_id . ' for ' . $domain . '. Expires after 1 week.<br /><br /><a href="' . $url . '">Download Snapshot</a>';
-	$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-
-	wp_mail( $to, $subject, $body, $headers );
+	return $url;
 }
 
 // Add reports to customers
@@ -5878,16 +6018,7 @@ function woocommerce_email_customer_invoice_add_recipients( $recipient, $order )
 	}
 	return $recipient;
 }
-
-// Insert text below the Featured Products title
-function add_toggle_to_woocommerce_after_account_navigation() {
-	// Echo out content
-	echo '<div class="toggle_woocommerce_my_account open"><span class="open"><a href="#"><i class="fas fa-long-arrow-alt-left"></i></a></span><span class="close"><a href="#"><i class="fas fa-long-arrow-alt-right"></i></a></span></div>';
-}
-add_action( 'woocommerce_before_account_navigation' , 'add_toggle_to_woocommerce_after_account_navigation' );
-
 function my_acf_input_admin_footer() {
-
 ?>
 <script type="text/javascript">
 	acf.add_action('ready', function( $el ){
@@ -6259,18 +6390,6 @@ function captaincore_human_filesize( $size, $precision = 2 ) {
 	return round( $size, $precision ) . $units[ $i ];
 }
 
-// Handle redirections of /my-account/manage/ and /my-account/handbook/ endpoints
-function captaincore_template_redirect() {
-	global $wp_query;
-
-	if ( isset( $wp_query->query['handbook'] ) ) {
-			wp_redirect( home_url( '/company-handbook/' ) );
-			die;
-	}
-
-}
-add_action( 'template_redirect', 'captaincore_template_redirect' );
-
 // Adds ACF Option page
 if( function_exists('acf_add_options_page') ) {
 	acf_add_options_page();
@@ -6296,4 +6415,44 @@ function captaincore_fetch_socket_address() {
 	}
 
 	return $socket_address;
+}
+
+// Load CaptainCore on page /account/
+add_filter( 'template_include', 'load_captaincore_template' );
+function load_captaincore_template( $original_template ) {
+  if ( is_user_logged_in() && is_account_page() ) {
+	global $wp;
+	$request = explode( '/', $wp->request );
+	if ( end($request) == 'my-account' ) {
+		wp_redirect("/account");
+	}
+  }
+  if ( is_page( 'account' ) ) {
+    return plugin_dir_path( __FILE__ ) . 'templates/core.php';
+  } else {
+    return $original_template;
+  }
+}
+
+function captaincore_head_content() {
+    ob_start();
+    do_action('wp_head');
+    return ob_get_clean();
+}
+
+function captaincore_header_content_extracted() {
+	$output = "<script type='text/javascript'>\n/* <![CDATA[ */\n";
+	$head = captaincore_head_content();
+	preg_match_all('/(var wpApiSettings.+)/', $head, $results );
+	foreach( $results as $matches ) {
+		foreach( $matches as $match ) {
+			$output = $output . $match . "\n";
+		}
+	}
+	$output = $output . "</script>";
+	preg_match_all('/(<link rel="(icon|apple-touch-icon).+)/', $head, $results );
+	if ( isset($results ) && $results[0] ) {
+		$output = $output . implode("\n", $results[0]);
+	}
+	echo $output;
 }
